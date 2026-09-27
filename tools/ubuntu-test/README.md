@@ -12,7 +12,7 @@ sh tools/ubuntu-test/build-all.sh
 
 Builds `ccline` (in ubuntu:20.04), the Tauri 2 tray `.deb` (22.04), the Tauri 1 tray `.deb` (20.04),
 collects each release's offline packages inside a container of that release, and assembles
-`.ubuntu-test/dist/ccline-ubuntu-<arch>/` and `.ubuntu-test/dist/litellm-usage-tray-ubuntu-<release>-<arch>/`
+`.ubuntu-test/dist/ccline-ubuntu-<arch>/` and `.ubuntu-test/dist/quota-tray-ubuntu-<release>-<arch>/`
 (+ `.tar.gz`). First run ~20–30 minutes; later runs are cached.
 
 ## 2. Start the test desktop (Ubuntu 24.04, Xfce panel with a tray, unlocked keyring)
@@ -35,8 +35,8 @@ The container reaches a LiteLLM running on the host at `http://host.docker.inter
 
 ```sh
 docker exec ubuntu-desktop sh -c '. /tmp/session.env
-  mkdir -p ~/dl && cd ~/dl && tar -xzf /test/dist/litellm-usage-tray-ubuntu-24.04-aarch64.tar.gz
-  cd litellm-usage-tray-ubuntu-24.04-aarch64
+  mkdir -p ~/dl && cd ~/dl && tar -xzf /test/dist/quota-tray-ubuntu-24.04-aarch64.tar.gz
+  cd quota-tray-ubuntu-24.04-aarch64
   sed -i "s|https://litellm.example.internal|http://host.docker.internal:4000|; s|https://status.example.internal|https://status.mycompany.test|" install.conf
   ./install.sh'
 ```

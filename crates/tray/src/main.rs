@@ -1,4 +1,4 @@
-//! LiteLLM Usage tray app: a tray icon showing budget used, and a popup panel with the details.
+//! Quota by Exodus.Ai — tray app: a tray icon showing budget used, and a popup panel with the details.
 //! Data, sign-in and the cache come from `usage-core`, shared with `ccline`.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
@@ -76,7 +76,7 @@ fn main() {
             }
         })
         .run(tauri::generate_context!())
-        .expect("failed to start LiteLLM Usage");
+        .expect("failed to start Quota by Exodus.Ai");
 }
 
 fn configure(args: &[String]) -> i32 {

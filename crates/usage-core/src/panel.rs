@@ -25,6 +25,8 @@ pub struct PanelState {
     pub now: i64,
     /// Seconds between automatic refreshes (the panel shows a countdown to the next one).
     pub refresh_secs: i64,
+    /// App version, shown at the bottom of Settings.
+    pub version: &'static str,
 }
 
 impl PanelState {
@@ -48,6 +50,7 @@ impl PanelState {
             cache,
             now: crate::now(),
             refresh_secs: crate::refresh::REFRESH_SECS,
+            version: env!("CARGO_PKG_VERSION"),
         }
     }
 
@@ -60,14 +63,14 @@ impl PanelState {
     pub fn tooltip(&self) -> String {
         match (self.snapshot(), self.used_fraction()) {
             (Some(s), Some(f)) => format!(
-                "Claude budget: ${:.2} of ${:.2} ({:.0}%)",
+                "Quota — Claude budget: ${:.2} of ${:.2} ({:.0}%)",
                 s.budget.spend,
                 s.budget.max_budget.unwrap_or_default(),
                 f * 100.0
             ),
-            (Some(s), None) => format!("Claude: ${:.2} spent", s.budget.spend),
-            _ if !self.signed_in => "Claude usage: signed out".to_string(),
-            _ => "Claude usage".to_string(),
+            (Some(s), None) => format!("Quota — Claude: ${:.2} spent", s.budget.spend),
+            _ if !self.signed_in => "Quota — signed out".to_string(),
+            _ => "Quota by Exodus.Ai".to_string(),
         }
     }
 

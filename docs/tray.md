@@ -1,4 +1,4 @@
-# Tray app
+# Tray app (Quota by Exodus.Ai)
 
 A tray icon that shows how much of your LiteLLM budget you've used, with a popup panel for the
 details. It shares its sign-in and cached numbers with `ccline`, so the two never fetch twice.

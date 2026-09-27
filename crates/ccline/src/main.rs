@@ -19,7 +19,7 @@ use usage_core::{cache, log, refresh};
 const REFRESH_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(45);
 
 const HELP: &str = "\
-ccline — Claude Code status line for your LiteLLM budget and usage
+ccline (Quota by Exodus.Ai) — Claude Code status line for your Claude budget and usage
 
 USAGE:
   ccline                    Print the status line (Claude Code runs this)

@@ -209,7 +209,7 @@ fn duration(secs: i64) -> String {
 /// Multi-line plain-text report for `ccline status`.
 pub fn report(snap: &Snapshot, now: i64) -> String {
     let b = &snap.budget;
-    let mut out = format!("LiteLLM usage for {}\n\n", snap.user_id);
+    let mut out = format!("Quota — Claude usage for {}\n\n", snap.user_id);
     let budget = match (b.max_budget, b.used_fraction()) {
         (Some(max), Some(frac)) => format!("{} of {} ({:.0}%)", money(b.spend), money(max), frac * 100.0),
         _ => format!("{} (no limit)", money(b.spend)),

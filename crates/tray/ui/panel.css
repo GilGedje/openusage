@@ -621,3 +621,23 @@ button {
     opacity: 0.5;
   }
 }
+
+/* Claude mark on the budget section's heading. */
+.brand-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+}
+
+/* Product name at the bottom of Settings. */
+.about {
+  margin: 16px 0 12px;
+  text-align: center;
+  font-size: var(--font-caption);
+  color: var(--text-tertiary);
+}
+
+.about-version {
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+}

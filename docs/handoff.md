@@ -37,6 +37,7 @@ remain. It is **not** OpenUsage and must not use its name or logo.
 | Language | **Rust** (shared core with the Tauri tray app) |
 | Certificates | Trust the org CA (system store + custom CA path); **never** disable verification |
 | Tray clicks | Left click opens the panel; right click = menu (Open, Refresh, Change LiteLLM URL…, Quit) |
+| Name | Product is **Quota by Exodus.Ai** (visible names). Internal ids stay `litellm-usage` (binary, settings folder, keychain service, env vars) so existing installs keep their sign-in |
 | Versions | Never bump or tag a version without explicit owner approval |
 
 ## 3. Layout
@@ -114,7 +115,7 @@ libssl-dev build-essential`.
   arm64: `ccline` built in ubuntu:20.04 (runs on 20.04+); the Tauri 2 tray `.deb` built on 22.04; the
   Tauri 1 tray `.deb` built in ubuntu:20.04; then, inside a container of **each** release (20.04,
   22.04, 24.04, 26.04), `fetch-deps.sh` collects the full dependency closure into a local apt repo and
-  `make-bundle.sh` assembles `litellm-usage-tray-ubuntu-<release>-<arch>`. Tags attach everything to
+  `make-bundle.sh` assembles `quota-tray-ubuntu-<release>-<arch>`. Tags attach everything to
   a GitHub Release.
 - **How offline install works:** `packages/` has the app, all libraries and a `Packages` index;
   `install.sh` runs apt with a throwaway config (`Dir::Etc::SourceList` = only that folder, temp

@@ -2,7 +2,7 @@ name: Bundles
 
 # Builds the fully offline Ubuntu installer folders:
 #   ccline-ubuntu-<arch>                       one folder for Ubuntu 20.04 and newer
-#   litellm-usage-tray-ubuntu-<release>-<arch> the tray app + every library it needs, per release
+#   quota-tray-ubuntu-<release>-<arch>         the tray app + every library it needs, per release
 # Runs on the working branch (artifacts on each run), on version tags (attached to a Release), and
 # manually.
 on:
@@ -112,7 +112,7 @@ jobs:
         run: sh installer/linux/make-bundle.sh tray ${{ matrix.release }} packages dist
       - uses: actions/upload-artifact@v4
         with:
-          name: litellm-usage-tray-ubuntu-${{ matrix.release }}-${{ runner.arch }}
+          name: quota-tray-ubuntu-${{ matrix.release }}-${{ runner.arch }}
           path: dist/*.tar.gz
           if-no-files-found: error
           compression-level: 0

@@ -1,4 +1,4 @@
-//! LiteLLM Usage tray for Ubuntu 20.04 — the same app as crates/tray, on Tauri 1 (WebKitGTK 4.0,
+//! Quota by Exodus.Ai tray for Ubuntu 20.04 — the same app as crates/tray, on Tauri 1 (WebKitGTK 4.0,
 //! which is all 20.04 has). Same panel UI (crates/tray/ui), same commands and events; the logic
 //! lives in `usage-core`, so this is only the Tauri 1 wiring.
 
@@ -55,7 +55,7 @@ fn start_sni() -> bool {
         settings: Box::new(with_app(show_settings)),
         quit: Box::new(with_app(|app| app.exit(0))),
     };
-    match sni_tray::SniTray::spawn(actions, &ring_rgba(None, false), SIZE, "LiteLLM Usage") {
+    match sni_tray::SniTray::spawn(actions, &ring_rgba(None, false), SIZE, "Quota by Exodus.Ai") {
         Ok(tray) => SNI.set(tray).is_ok(),
         Err(e) => {
             log::error("tray", &format!("no StatusNotifierItem host, using the menu-only icon: {e}"));
@@ -129,7 +129,7 @@ fn main() {
             }
         })
         .run(tauri::generate_context!())
-        .expect("failed to start LiteLLM Usage");
+        .expect("failed to start Quota by Exodus.Ai");
 }
 
 /// Refreshes when due, then pushes the latest state to the panel and tray.

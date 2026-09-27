@@ -1,4 +1,4 @@
-LiteLLM Usage for Windows — early build (programs only, no installer yet)
+Quota by Exodus.Ai for Windows — early build (programs only, no installer yet)
 
 What's inside
   ccline\ccline.exe              Claude Code status line + command-line tool
@@ -27,7 +27,7 @@ Install ccline (PowerShell, as the user — replace the address)
      shown in PowerShell.
 
 Install the tray app (PowerShell, as the user — replace the addresses)
-  $dir = "$env:LOCALAPPDATA\Programs\LiteLLM Usage"
+  $dir = "$env:LOCALAPPDATA\Programs\Quota"
   New-Item -ItemType Directory -Force $dir | Out-Null
   Copy-Item .\tray\litellm-usage.exe $dir
   & "$dir\litellm-usage.exe" --configure --url https://your-litellm-proxy --status-url https://your-status-page
@@ -36,7 +36,7 @@ Install the tray app (PowerShell, as the user — replace the addresses)
   -> "--configure" saves the addresses (it prints nothing on Windows; exit code 0 means OK).
      Click the ring icon in the taskbar's notification area, then Sign In.
   Start at login (optional):
-  $s = (New-Object -ComObject WScript.Shell).CreateShortcut("$([Environment]::GetFolderPath('Startup'))\LiteLLM Usage.lnk")
+  $s = (New-Object -ComObject WScript.Shell).CreateShortcut("$([Environment]::GetFolderPath('Startup'))\Quota.lnk")
   $s.TargetPath = "$dir\litellm-usage.exe"; $s.Save()
 
 Both share one sign-in (stored in Windows Credential Manager) and one settings file

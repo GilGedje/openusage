@@ -19,7 +19,7 @@
       ],
       "identifier": "io.github.gilgedje.litellm-usage",
       "category": "Utility",
-      "shortDescription": "LiteLLM budget and usage in your tray",
+      "shortDescription": "Your Claude budget and usage in the tray",
       "icon": [
         "../tray/icons/32x32.png",
         "../tray/icons/128x128.png",
@@ -37,7 +37,7 @@
     "windows": [
       {
         "label": "panel",
-        "title": "LiteLLM Usage",
+        "title": "Quota by Exodus.Ai",
         "url": "index.html",
         "width": 320,
         "height": 420,

@@ -28,7 +28,7 @@ fn install_tauri(app: &App) -> tauri::Result<()> {
     TrayIconBuilder::with_id(state::TRAY_ID)
         .icon(gauge::icon(None))
         .icon_as_template(cfg!(target_os = "macos"))
-        .tooltip("LiteLLM Usage")
+        .tooltip("Quota by Exodus.Ai")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -60,7 +60,7 @@ fn install_sni(app: &AppHandle) -> bool {
         settings: Box::new(move || panel::show_settings(&c)),
         quit: Box::new(move || d.exit(0)),
     };
-    match sni_tray::SniTray::spawn(actions, &ring_rgba(None, false), SIZE, "LiteLLM Usage") {
+    match sni_tray::SniTray::spawn(actions, &ring_rgba(None, false), SIZE, "Quota by Exodus.Ai") {
         Ok(tray) => {
             if let Ok(mut slot) = app.state::<state::AppState>().sni.lock() {
                 *slot = Some(tray);

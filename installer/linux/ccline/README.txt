@@ -1,4 +1,4 @@
-ccline for Ubuntu — Claude Code status line, offline installer
+ccline (Quota by Exodus.Ai) — Claude Code status line for Ubuntu, offline installer
 
 What's inside
   ccline                Status line + command-line tool
@@ -24,5 +24,5 @@ Useful commands
   ccline login         sign in again
   ccline logout        sign out
 
-Also available: the litellm-usage-tray folder adds a tray icon with a usage panel. Both share
+Also available: the quota-tray folder adds a tray icon with a usage panel. Both share
 one sign-in.

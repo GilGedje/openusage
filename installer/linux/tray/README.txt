@@ -1,4 +1,4 @@
-LiteLLM Usage tray app for Ubuntu — offline installer
+Quota by Exodus.Ai — tray app for Ubuntu, offline installer
 
 What's inside
   packages/             The tray app and every library it needs (a small local apt repository)

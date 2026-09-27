@@ -34,7 +34,7 @@ const Views = {
     return (
       (err ? this.staleBanner(err, snap, state.now) : "") +
       this.cost(snap, period) +
-      this.accountHeader() +
+      this.accountHeader(snap) +
       this.account(snap, state.now) +
       this.links(state) +
       this.footer(state)
@@ -148,8 +148,14 @@ const Views = {
 
   // --- Claude budget card --------------------------------------------------
 
-  accountHeader() {
-    return `<div class="section-header-row"><div class="section-title">Claude</div></div>`;
+  // "Claude  $100 budget" (the user's total budget), with the Claude mark on the right.
+  accountHeader(snap) {
+    const b = snap && snap.budget;
+    const total = b ? (b.max_budget > 0 ? `${Format.money(b.max_budget)} budget` : "No limit") : "";
+    return `<div class="section-header-row">
+        <div class="section-title">Claude${total ? ` <span class="subtitle num">${total}</span>` : ""}</div>
+        <img class="brand-icon" src="claude.png" alt="" />
+      </div>`;
   },
 
   account(snap, now) {
@@ -247,7 +253,8 @@ const Views = {
         <span class="metric-label">Appearance</span>
         <div class="segmented" style="--segment-index:${index}"><span class="segment-thumb" aria-hidden="true"></span>${segs}</div>
       </div></div>
-      ${signOut}`;
+      ${signOut}
+      <div class="about">Quota by Exodus.Ai${state.version ? ` <span class="about-version">${esc(state.version)}</span>` : ""}</div>`;
   },
 
   // --- Sign-in flow --------------------------------------------------------

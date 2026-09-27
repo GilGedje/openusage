@@ -86,7 +86,8 @@ const Motion = {
     const toast = document.createElement("div");
     toast.className = "toast";
     toast.textContent = text;
-    document.body.appendChild(toast);
+    // Inside the panel's container (the window body in the app; the panel frame on a demo page).
+    (app.parentElement || document.body).appendChild(toast);
     const path = this.reduced()
       ? [{ opacity: 0 }, { opacity: 1 }]
       : [{ opacity: 0, transform: "translate(-50%, 12px)" }, { opacity: 1, transform: "translate(-50%, 0)" }];

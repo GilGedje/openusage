@@ -1,4 +1,4 @@
-# LiteLLM Usage
+# Quota by Exodus.Ai
 
 See your LiteLLM budget and usage while you work with Claude Code — in Claude Code's status line and
 in a tray app — on Ubuntu, Windows and macOS. Built for air-gapped networks: it installs offline and

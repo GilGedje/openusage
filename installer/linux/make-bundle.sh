@@ -6,7 +6,7 @@
 #       -> ccline-ubuntu-<arch>/                      (runs on Ubuntu 20.04 and newer)
 #
 #   make-bundle.sh tray <ubuntu version> <packages dir from fetch-deps.sh> <output dir>
-#       -> litellm-usage-tray-ubuntu-<version>-<arch>/ (the app + every library it needs)
+#       -> quota-tray-ubuntu-<version>-<arch>/ (the app + every library it needs)
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -45,7 +45,7 @@ case "$1" in
     PACKAGES=$3
     OUT=$4
     mkdir -p "$OUT"
-    DIR="$OUT/litellm-usage-tray-ubuntu-$UBUNTU-$ARCH"
+    DIR="$OUT/quota-tray-ubuntu-$UBUNTU-$ARCH"
     start "$DIR" "$HERE/tray"
     echo "$UBUNTU" > "$DIR/UBUNTU"
     cp -R "$PACKAGES" "$DIR/packages"

@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# LiteLLM Usage tray app — offline installer for Ubuntu. Run from this folder as the user (not sudo):
+# Quota by Exodus.Ai (tray app) — offline installer for Ubuntu. Run from this folder as the user (not sudo):
 #   ./install.sh
 # Everything it needs is in this folder: the app and all its libraries. Nothing is downloaded.
 # The panel opens when it's done; sign in there with your company SSO.
@@ -77,7 +77,7 @@ if [ "$START_AT_LOGIN" = "yes" ]; then
   cat > "$HOME/.config/autostart/litellm-usage.desktop" <<'DESKTOP'
 [Desktop Entry]
 Type=Application
-Name=LiteLLM Usage
+Name=Quota by Exodus.Ai
 Exec=litellm-usage
 Icon=litellm-usage
 X-GNOME-Autostart-enabled=true
@@ -91,5 +91,5 @@ if [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then
   LITELLM_USAGE_OPEN_PANEL=1 nohup litellm-usage >/dev/null 2>&1 &
   say "Done. The panel is open at the top right: click Sign In and finish in your browser."
 else
-  say "Done. Log in to your desktop and start \"LiteLLM Usage\" to sign in."
+  say "Done. Log in to your desktop and start \"Quota by Exodus.Ai\" to sign in."
 fi

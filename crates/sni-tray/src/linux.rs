@@ -31,7 +31,7 @@ impl ksni::Tray for Tray {
     }
 
     fn title(&self) -> String {
-        "LiteLLM Usage".into()
+        "Quota by Exodus.Ai".into()
     }
 
     fn category(&self) -> Category {

@@ -52,7 +52,7 @@ addresses.
 | Folder | For | Contents | Size | Needs sudo |
 |---|---|---|---|---|
 | `ccline-ubuntu-<arch>/` | 20.04–26.04 | `ccline`, `install.sh`, `install.conf`, `README.txt`, `SHA256SUMS`, `ARCH` | ~2 MB | no |
-| `litellm-usage-tray-ubuntu-<release>-<arch>/` | that release only | `packages/` (app + all libraries, a local apt repo), `install.sh`, `install.conf`, `README.txt`, `SHA256SUMS`, `ARCH`, `UBUNTU`, `APP_PACKAGE` | 210–350 MB | yes |
+| `quota-tray-ubuntu-<release>-<arch>/` | that release only | `packages/` (app + all libraries, a local apt repo), `install.sh`, `install.conf`, `README.txt`, `SHA256SUMS`, `ARCH`, `UBUNTU`, `APP_PACKAGE` | 210–350 MB | yes |
 
 The tray folders are large because they carry the whole dependency chain, so an old, never-updated
 machine still installs cleanly. apt installs only what's missing (on the test desktops: 3–65
