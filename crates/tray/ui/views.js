@@ -24,6 +24,7 @@ const Views = {
       this.cost(snap, period) +
       this.accountHeader(state) +
       this.account(snap, state.now) +
+      this.links(state) +
       this.footer(state)
     );
   },
@@ -134,7 +135,6 @@ const Views = {
     return `
       <div class="section-header-row">
         <div class="section-title">LiteLLM ${user}</div>
-        <button class="icon-button" data-action="refresh" aria-label="Refresh">↻</button>
       </div>`;
   },
 
@@ -180,15 +180,24 @@ const Views = {
       </div>`;
   },
 
+  // Dashboard (LiteLLM's Usage page) and Status (the org's status page, when configured).
+  links(state) {
+    const items = [];
+    if (state.usage_url) items.push(`<button class="provider-link" data-action="open-usage">Dashboard <span aria-hidden="true">↗</span></button>`);
+    if (state.status_url) items.push(`<button class="provider-link" data-action="open-status">Status <span aria-hidden="true">↗</span></button>`);
+    return items.length ? `<div class="provider-links">${items.join("")}</div>` : "";
+  },
+
   footer(state) {
     const cache = state.cache;
     const updated = cache && cache.snapshot ? `Updated ${Format.duration(state.now - cache.snapshot.fetched_at)} ago` : "";
-    const open = state.usage_url ? `<button class="link-button" data-action="open-usage">Open LiteLLM ↗</button>` : "";
     return `
       <div class="footer">
-        <span>${updated}</span>
+        <span class="footer-status">
+          <span>${updated}</span>
+          <button class="link-button" data-action="refresh"><span class="refresh-glyph" aria-hidden="true">↻</span> Refresh Now</button>
+        </span>
         <span class="actions">
-          ${open}
           <button class="link-button" data-action="sign-out">Sign Out</button>
           <button class="link-button" data-action="quit">Quit</button>
         </span>
@@ -197,8 +206,8 @@ const Views = {
 
   // --- Sign-in flow --------------------------------------------------------
 
-  signIn(state, error) {
-    const url = state.suggested_url || state.proxy_url || "";
+  signIn(state, error, draftUrl) {
+    const url = draftUrl ?? (state.suggested_url || state.proxy_url || "");
     return `
       <div class="section-title">LiteLLM</div>
       <div class="card"><div class="stack">

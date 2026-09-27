@@ -22,8 +22,9 @@ details. It shares its sign-in and cached numbers with `ccline`, so the two neve
     if you spent evenly across the budget window. If you're spending fast enough to run out before the
     reset, it warns **Limit in …** instead.
   - **Today / Yesterday / Last 30 Days** — spend and tokens.
-- **Footer** — when the numbers were last updated, **Open LiteLLM** (LiteLLM's own Usage page),
-  **Sign Out**, **Quit**.
+- **Dashboard** — opens LiteLLM's own Usage page. **Status** — opens your organization's status page
+  (shown only when one is set, see below).
+- **Footer** — when the numbers were last updated, **Refresh Now**, **Sign Out**, **Quit**.
 
 If LiteLLM can't be reached, the last numbers stay up with a note saying how old they are.
 
@@ -32,6 +33,13 @@ If LiteLLM can't be reached, the last numbers stay up with a note saying how old
 Same SSO sign-in as `ccline login`: enter your LiteLLM address (pre-filled from Claude Code's
 `ANTHROPIC_BASE_URL` or your last sign-in), click **Sign In**, finish in the browser, and type the
 code the panel shows. If you're in several teams, the panel asks which one Claude Code uses.
+
+## Status page
+
+Set it once per machine, either as `"status_url": "https://status.example.com"` in the settings file
+(`litellm-usage/config.json` in the OS config folder — on macOS `~/Library/Application Support/`) or
+with the `LITELLM_USAGE_STATUS_URL` environment variable (which wins). Without it, the Status link is
+hidden.
 
 ## Refreshing
 

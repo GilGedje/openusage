@@ -249,6 +249,26 @@ body {
   font-weight: 600;
 }
 
+/* Dashboard / Status links under the account card */
+.provider-links {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 0 2px;
+}
+
+.provider-link {
+  padding: 3px 8px;
+  border-radius: var(--highlight-radius);
+  font-size: var(--font-supporting);
+  color: var(--text-secondary);
+}
+
+.provider-link:hover {
+  background: var(--card-fill);
+  color: var(--text);
+}
+
 /* Footer */
 .footer {
   display: flex;
@@ -262,9 +282,26 @@ body {
   color: var(--text-secondary);
 }
 
-.footer .actions {
+.footer .actions,
+.footer-status {
   display: flex;
+  align-items: center;
   gap: 0;
+}
+
+.footer-status {
+  gap: 2px;
+}
+
+.link-button.busy .refresh-glyph {
+  display: inline-block;
+  animation: spin 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-button.busy .refresh-glyph {
+    animation: none;
+  }
 }
 
 /* Buttons and inputs */

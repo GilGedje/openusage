@@ -9,6 +9,8 @@ let state = null;
 // null | { phase: "waiting", code, link } | { phase: "team", teams }
 let login = null;
 let signInError = null;
+// What the user has typed in the sign-in URL field, so background updates don't wipe it.
+let draftUrl = null;
 let period = loadPeriod();
 
 // The chosen Cost period is a per-viewer convenience; storage may be unavailable.
@@ -22,9 +24,11 @@ function loadPeriod() {
 
 function render() {
   if (!state) return;
+  // Don't redraw the sign-in form under the user's cursor.
+  if (document.activeElement && document.activeElement.id === "proxy-url" && !state.signed_in && !login) return;
   if (login && login.phase === "waiting") app.innerHTML = Views.waiting(login);
   else if (login && login.phase === "team") app.innerHTML = Views.pickTeam(login.teams);
-  else if (!state.signed_in) app.innerHTML = Views.signIn(state, signInError);
+  else if (!state.signed_in) app.innerHTML = Views.signIn(state, signInError, draftUrl);
   else app.innerHTML = Views.usage(state, period);
   requestAnimationFrame(() => invoke("fit_height", { height: document.body.scrollHeight }));
 }
@@ -32,7 +36,8 @@ function render() {
 async function act(action, el) {
   switch (action) {
     case "refresh": {
-      el.classList.add("spinning");
+      el.disabled = true;
+      el.classList.add("busy");
       state = await invoke("refresh");
       break;
     }
@@ -43,6 +48,7 @@ async function act(action, el) {
       try {
         const started = await invoke("start_login", { url: url || null });
         login = { phase: "waiting", code: started.code, link: started.link };
+        draftUrl = null;
       } catch (e) {
         signInError = String(e);
       }
@@ -56,6 +62,9 @@ async function act(action, el) {
       break;
     case "open-usage":
       if (state && state.usage_url) await invoke("open_url", { url: state.usage_url });
+      return;
+    case "open-status":
+      if (state && state.status_url) await invoke("open_url", { url: state.status_url });
       return;
     case "open-link":
       if (login && login.link) await invoke("open_url", { url: login.link });
@@ -81,6 +90,10 @@ async function act(action, el) {
 app.addEventListener("click", (e) => {
   const el = e.target.closest("[data-action]");
   if (el) act(el.dataset.action, el).catch((err) => console.error(err));
+});
+
+app.addEventListener("input", (e) => {
+  if (e.target.id === "proxy-url") draftUrl = e.target.value;
 });
 
 app.addEventListener("keydown", (e) => {

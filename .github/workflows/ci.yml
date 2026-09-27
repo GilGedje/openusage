@@ -18,6 +18,11 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
+      - name: Linux libraries for the tray app (Tauri)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev build-essential
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
       - run: cargo build --release
@@ -27,4 +32,6 @@ jobs:
           path: |
             target/release/ccline
             target/release/ccline.exe
+            target/release/litellm-usage
+            target/release/litellm-usage.exe
           if-no-files-found: error

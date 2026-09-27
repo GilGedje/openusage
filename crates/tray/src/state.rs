@@ -31,6 +31,8 @@ pub struct PanelState {
     pub suggested_url: Option<String>,
     /// LiteLLM's own Usage page.
     pub usage_url: Option<String>,
+    /// The organization's status page, when configured.
+    pub status_url: Option<String>,
     pub cache: Option<CacheFile>,
     pub now: i64,
 }
@@ -42,12 +44,14 @@ pub fn current() -> PanelState {
     });
     let cache = config.proxy_url.as_ref().and_then(|url| cache::read().filter(|c| &c.proxy_url == url));
     let usage_url = config.proxy_url.as_deref().map(usage_core::config::usage_page_url);
+    let status_url = config.status_page();
     PanelState {
         signed_in: config.user_id.is_some(),
         user_id: config.user_id,
         proxy_url: config.proxy_url,
         suggested_url: account::resolve_proxy_url(None).ok(),
         usage_url,
+        status_url,
         cache,
         now: usage_core::now(),
     }

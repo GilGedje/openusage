@@ -23,6 +23,7 @@ pub fn save_sign_in(proxy_url: &str, token: &str, user_id: &str, team_id: Option
         user_id: Some(user_id.to_string()),
         team_id,
         signed_in_at: Some(crate::now()),
+        status_url: Config::load()?.status_url,
     }
     .save()?;
     cache::clear()
@@ -34,6 +35,6 @@ pub fn sign_out() -> Result<()> {
     if let Some(url) = &config.proxy_url {
         secret::delete(url)?;
     }
-    Config { proxy_url: config.proxy_url, ..Config::default() }.save()?;
+    Config { proxy_url: config.proxy_url, status_url: config.status_url, ..Config::default() }.save()?;
     cache::clear()
 }

@@ -22,6 +22,20 @@ pub struct Config {
     /// Unix seconds when the token was issued (it expires after the proxy's configured lifetime).
     #[serde(default)]
     pub signed_in_at: Option<i64>,
+    /// The organization's service status page (like status.claude.com). Optional.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub status_url: Option<String>,
+}
+
+impl Config {
+    /// Status page to link to: `LITELLM_USAGE_STATUS_URL`, else `status_url` in the config file.
+    pub fn status_page(&self) -> Option<String> {
+        std::env::var("LITELLM_USAGE_STATUS_URL")
+            .ok()
+            .or_else(|| self.status_url.clone())
+            .map(|u| u.trim().to_string())
+            .filter(|u| u.starts_with("https://") || u.starts_with("http://"))
+    }
 }
 
 impl Config {

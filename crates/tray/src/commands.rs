@@ -37,8 +37,13 @@ pub fn sign_out(app: AppHandle) -> Result<PanelState, String> {
     Ok(state::current())
 }
 
+/// Opens a web page in the default browser. Only http(s) links: the OS opener would also launch
+/// local files and apps.
 #[tauri::command]
 pub fn open_url(url: String) -> Result<(), String> {
+    if !(url.starts_with("https://") || url.starts_with("http://")) {
+        return Err(format!("Not a web link: {url}"));
+    }
     open::that_detached(&url).map_err(|e| e.to_string())
 }
 
