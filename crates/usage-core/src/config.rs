@@ -14,6 +14,14 @@ const APP_DIR: &str = "litellm-usage";
 pub struct Config {
     /// Proxy the saved sign-in belongs to, normalized (see `normalize_url`).
     pub proxy_url: Option<String>,
+    /// Who signed in (the token itself is in secure storage).
+    #[serde(default)]
+    pub user_id: Option<String>,
+    #[serde(default)]
+    pub team_id: Option<String>,
+    /// Unix seconds when the token was issued (it expires after the proxy's configured lifetime).
+    #[serde(default)]
+    pub signed_in_at: Option<i64>,
 }
 
 impl Config {

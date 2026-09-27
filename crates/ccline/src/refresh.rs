@@ -71,7 +71,7 @@ pub fn refresh_now() -> Result<Snapshot> {
 }
 
 fn fetch(proxy_url: &str) -> Result<Snapshot> {
-    let session = secret::load(proxy_url)?.ok_or(Error::SignedOut)?;
-    let client = Client::new(proxy_url, Some(&session.token));
+    let token = secret::load(proxy_url)?.ok_or(Error::SignedOut)?;
+    let client = Client::new(proxy_url, Some(&token));
     snapshot::fetch(&client)
 }

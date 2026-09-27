@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 
 use usage_core::client::Client;
 use usage_core::config::{Config, normalize_url};
-use usage_core::secret::{self, Session};
+use usage_core::secret;
 use usage_core::sso::{self, Poll, Team};
 use usage_core::{Error, Result, cache};
 
@@ -45,9 +45,14 @@ pub fn login(url_flag: Option<String>) -> Result<()> {
         }
     };
 
-    let session = Session { token, user_id: user_id.clone(), team_id, obtained_at: usage_core::now() };
-    secret::save(&proxy_url, &session)?;
-    Config { proxy_url: Some(proxy_url) }.save()?;
+    secret::save(&proxy_url, &token)?;
+    Config {
+        proxy_url: Some(proxy_url),
+        user_id: Some(user_id.clone()),
+        team_id,
+        signed_in_at: Some(usage_core::now()),
+    }
+    .save()?;
     cache::clear()?;
     println!("\nSigned in as {user_id}.\n");
     status()
@@ -76,6 +81,8 @@ pub fn logout() -> Result<()> {
     if let Some(url) = &config.proxy_url {
         secret::delete(url)?;
     }
+    // Keep the proxy URL so `ccline login` can sign in again without `--url`.
+    Config { proxy_url: config.proxy_url, ..Config::default() }.save()?;
     cache::clear()?;
     println!("Signed out.");
     Ok(())
