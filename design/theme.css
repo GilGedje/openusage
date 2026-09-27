@@ -1,0 +1,226 @@
+/*
+ * Theme — tokens and base surfaces for the tray popup.
+ *
+ * Ported from the macOS Theme.swift + DensitySetting.swift look: an opaque page "tray", borderless
+ * grouped cards lifted off it by a subtle fill (System Settings style), thin capsule meters in a
+ * blue / yellow / red traffic light. The original used macOS system colors; these are their
+ * light/dark values so the look carries to Windows and Ubuntu.
+ *
+ * Light/dark follows the OS. Force one with <html data-theme="light|dark">.
+ * Compact density: <html data-density="compact">.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Surfaces */
+  --tray: #ffffff;                          /* page behind the cards */
+  --card-fill: rgba(0, 0, 0, 0.025);        /* lifts a card off the tray (~#F9F9F9 on white) */
+  --separator: rgba(0, 0, 0, 0.1);
+  --meter-track: rgba(0, 0, 0, 0.08);
+
+  /* Text */
+  --text: rgba(0, 0, 0, 0.85);
+  --text-secondary: rgba(0, 0, 0, 0.5);
+  --text-tertiary: rgba(0, 0, 0, 0.26);
+
+  /* Meter severity (traffic light) */
+  --meter-normal: #007aff;
+  --meter-warning: #ffcc00;
+  --meter-critical: #ff3b30;
+  --pace-tick: rgba(0, 0, 0, 0.55);
+
+  /* Inline tints */
+  --notice: #ff9500;                        /* warnings, errors, limits */
+  --positive: #34c759;                      /* confirmations */
+
+  /* Shape */
+  --card-radius: 12px;
+  --highlight-radius: 6px;
+  --panel-width: 320px;
+
+  /* Type */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Ubuntu, Cantarell,
+    "Noto Sans", system-ui, sans-serif;
+  --font-header: 14px;                      /* provider / section header, semibold */
+  --font-label: 13px;                       /* metric row label, semibold */
+  --font-supporting: 12px;                  /* under-bar detail text */
+  --font-badge: 11px;                       /* plan badge */
+  --font-caption: 10px;                     /* small section captions, semibold */
+
+  /* Density */
+  --meter-height: 5px;
+  --card-gutter: 5px;                       /* inside a card, above the first / below the last row */
+  --row-padding-x: 14px;
+  --bar-row-padding-y: 10px;                /* row with a meter */
+  --text-row-padding-y: 6px;                /* text-only row */
+  --row-inner-spacing: 4px;                 /* label ↔ meter ↔ detail */
+  --section-spacing: 14px;                  /* between sections */
+  --header-to-card: 4px;
+  --content-top: 14px;
+}
+
+:root[data-density="compact"] {
+  --font-header: 13px;
+  --font-label: 12px;
+  --font-supporting: 11px;
+  --font-badge: 10px;
+  --meter-height: 4px;
+  --card-gutter: 3px;
+  --bar-row-padding-y: 5px;
+  --text-row-padding-y: 4px;
+  --row-inner-spacing: 3px;
+  --section-spacing: 8px;
+  --header-to-card: 2px;
+  --content-top: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --tray: #1e1e1e;
+    --card-fill: rgba(255, 255, 255, 0.05);
+    --separator: rgba(255, 255, 255, 0.1);
+    --meter-track: rgba(255, 255, 255, 0.1);
+    --text: rgba(255, 255, 255, 0.85);
+    --text-secondary: rgba(255, 255, 255, 0.55);
+    --text-tertiary: rgba(255, 255, 255, 0.25);
+    --meter-normal: #0a84ff;
+    --meter-warning: #ffd60a;
+    --meter-critical: #ff453a;
+    --pace-tick: rgba(255, 255, 255, 0.55);
+    --notice: #ff9f0a;
+    --positive: #30d158;
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --tray: #1e1e1e;
+  --card-fill: rgba(255, 255, 255, 0.05);
+  --separator: rgba(255, 255, 255, 0.1);
+  --meter-track: rgba(255, 255, 255, 0.1);
+  --text: rgba(255, 255, 255, 0.85);
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --text-tertiary: rgba(255, 255, 255, 0.25);
+  --meter-normal: #0a84ff;
+  --meter-warning: #ffd60a;
+  --meter-critical: #ff453a;
+  --pace-tick: rgba(255, 255, 255, 0.55);
+  --notice: #ff9f0a;
+  --positive: #30d158;
+}
+
+/* Base */
+
+body {
+  margin: 0;
+  background: var(--tray);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--font-supporting);
+  -webkit-font-smoothing: antialiased;
+}
+
+.panel {
+  width: var(--panel-width);
+  padding: var(--content-top) 8px 0;
+  box-sizing: border-box;
+}
+
+.section + .section {
+  margin-top: var(--section-spacing);
+}
+
+/* Grouped card: opaque page base + subtle fill, borderless */
+
+.card {
+  background: linear-gradient(var(--card-fill), var(--card-fill)), var(--tray);
+  border-radius: var(--card-radius);
+  padding: var(--card-gutter) 0;
+}
+
+.section-header {
+  font-size: var(--font-header);
+  font-weight: 600;
+  padding: 2px 4px 2px 2px;
+  margin-bottom: var(--header-to-card);
+}
+
+.badge {
+  font-size: var(--font-badge);
+  color: var(--text-secondary);
+}
+
+.caption {
+  font-size: var(--font-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 5px 0;
+}
+
+/* Metric row: label → meter → supporting text. No dividers between rows. */
+
+.row {
+  padding: var(--text-row-padding-y) var(--row-padding-x);
+}
+
+.row:has(.meter) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-inner-spacing);
+  padding-block: var(--bar-row-padding-y);
+}
+
+.row-label {
+  font-size: var(--font-label);
+  font-weight: 600;
+}
+
+.row-detail {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--font-supporting);
+  color: var(--text-secondary);
+}
+
+/* Meter: capsule track + capsule fill, optional pace tick */
+
+.meter {
+  position: relative;
+  height: var(--meter-height);
+  border-radius: 999px;
+  background: var(--meter-track);
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--meter-normal);
+  transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.meter[data-severity="warning"] .meter-fill { background: var(--meter-warning); }
+.meter[data-severity="critical"] .meter-fill { background: var(--meter-critical); }
+
+.meter-tick {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: calc(var(--meter-height) + 4px);
+  border-radius: 1px;
+  background: var(--pace-tick);
+  transform: translateX(-1px);
+}
+
+.notice { color: var(--notice); }
+.positive { color: var(--positive); }
+
+@media (prefers-reduced-motion: reduce) {
+  .meter-fill { transition: none; }
+}
