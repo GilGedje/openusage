@@ -1,0 +1,14 @@
+[workspace]
+resolver = "3"
+members = ["crates/usage-core", "crates/ccline"]
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+version = "0.1.0"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+codegen-units = 1

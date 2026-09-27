@@ -1,0 +1,336 @@
+{
+ "results": [
+  {
+   "date": "2026-06-27",
+   "metrics": {
+    "spend": 0.0,
+    "flat_cost": 0.0,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "compression_saved_tokens": 0,
+    "compression_savings_spend": 0.0,
+    "prompt_caching_savings_spend": 0.0,
+    "autorouter_savings_spend": 0.0,
+    "total_tokens": 0,
+    "successful_requests": 0,
+    "failed_requests": 27,
+    "api_requests": 27
+   },
+   "breakdown": {
+    "mcp_servers": {},
+    "models": {},
+    "model_groups": {},
+    "providers": {
+     "unknown": {
+      "metrics": {
+       "spend": 0.0,
+       "flat_cost": 0.0,
+       "prompt_tokens": 0,
+       "completion_tokens": 0,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 0,
+       "successful_requests": 0,
+       "failed_requests": 27,
+       "api_requests": 27
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     }
+    },
+    "endpoints": {},
+    "api_keys": {
+     "hash-a": {
+      "metrics": {
+       "spend": 0.0,
+       "flat_cost": 0.0,
+       "prompt_tokens": 0,
+       "completion_tokens": 0,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 0,
+       "successful_requests": 0,
+       "failed_requests": 27,
+       "api_requests": 27
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     }
+    },
+    "entities": {}
+   }
+  },
+  {
+   "date": "2026-07-02",
+   "metrics": {
+    "spend": 0.00256385,
+    "flat_cost": 0.0,
+    "prompt_tokens": 38,
+    "completion_tokens": 440,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "compression_saved_tokens": 0,
+    "compression_savings_spend": 0.0,
+    "prompt_caching_savings_spend": 0.0,
+    "autorouter_savings_spend": 0.0,
+    "total_tokens": 478,
+    "successful_requests": 6,
+    "failed_requests": 1,
+    "api_requests": 7
+   },
+   "breakdown": {
+    "mcp_servers": {},
+    "models": {
+     "gemini/gemini-2.5-flash": {
+      "metrics": {
+       "spend": 0.0006276,
+       "flat_cost": 0.0,
+       "prompt_tokens": 17,
+       "completion_tokens": 249,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 266,
+       "successful_requests": 3,
+       "failed_requests": 0,
+       "api_requests": 3
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     },
+     "gemini/gemini-2.5-pro": {
+      "metrics": {
+       "spend": 0.00193625,
+       "flat_cost": 0.0,
+       "prompt_tokens": 21,
+       "completion_tokens": 191,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 212,
+       "successful_requests": 3,
+       "failed_requests": 0,
+       "api_requests": 3
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     },
+     "sonnet": {
+      "metrics": {
+       "spend": 0.0,
+       "flat_cost": 0.0,
+       "prompt_tokens": 0,
+       "completion_tokens": 0,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 0,
+       "successful_requests": 0,
+       "failed_requests": 1,
+       "api_requests": 1
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     }
+    },
+    "model_groups": {
+     "claude-sonnet-4-6": {
+      "metrics": {
+       "spend": 0.0007575,
+       "flat_cost": 0.0,
+       "prompt_tokens": 14,
+       "completion_tokens": 74,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 88,
+       "successful_requests": 2,
+       "failed_requests": 0,
+       "api_requests": 2
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     },
+     "gemini-2.5-flash": {
+      "metrics": {
+       "spend": 0.0005842,
+       "flat_cost": 0.0,
+       "prompt_tokens": 14,
+       "completion_tokens": 232,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 246,
+       "successful_requests": 2,
+       "failed_requests": 0,
+       "api_requests": 2
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     },
+     "gemini-2.5-pro": {
+      "metrics": {
+       "spend": 0.00117875,
+       "flat_cost": 0.0,
+       "prompt_tokens": 7,
+       "completion_tokens": 117,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 124,
+       "successful_requests": 1,
+       "failed_requests": 0,
+       "api_requests": 1
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     },
+     "haiku": {
+      "metrics": {
+       "spend": 4.34e-05,
+       "flat_cost": 0.0,
+       "prompt_tokens": 3,
+       "completion_tokens": 17,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 20,
+       "successful_requests": 1,
+       "failed_requests": 0,
+       "api_requests": 1
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     },
+     "sonnet": {
+      "metrics": {
+       "spend": 0.0,
+       "flat_cost": 0.0,
+       "prompt_tokens": 0,
+       "completion_tokens": 0,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 0,
+       "successful_requests": 0,
+       "failed_requests": 1,
+       "api_requests": 1
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     }
+    },
+    "providers": {
+     "gemini": {
+      "metrics": {
+       "spend": 0.00256385,
+       "flat_cost": 0.0,
+       "prompt_tokens": 38,
+       "completion_tokens": 440,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 478,
+       "successful_requests": 6,
+       "failed_requests": 0,
+       "api_requests": 6
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     },
+     "unknown": {
+      "metrics": {
+       "spend": 0.0,
+       "flat_cost": 0.0,
+       "prompt_tokens": 0,
+       "completion_tokens": 0,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 0,
+       "successful_requests": 0,
+       "failed_requests": 1,
+       "api_requests": 1
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     }
+    },
+    "endpoints": {},
+    "api_keys": {
+     "hash-b": {
+      "metrics": {
+       "spend": 0.00176295,
+       "flat_cost": 0.0,
+       "prompt_tokens": 21,
+       "completion_tokens": 349,
+       "cache_read_input_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "compression_saved_tokens": 0,
+       "compression_savings_spend": 0.0,
+       "prompt_caching_savings_spend": 0.0,
+       "autorouter_savings_spend": 0.0,
+       "total_tokens": 370,
+       "successful_requests": 3,
+       "failed_requests": 0,
+       "api_requests": 3
+      },
+      "metadata": {},
+      "api_key_breakdown": {}
+     }
+    },
+    "entities": {}
+   }
+  }
+ ],
+ "metadata": {
+  "total_spend": 0.00256385,
+  "total_prompt_tokens": 38,
+  "total_completion_tokens": 440,
+  "total_tokens": 478,
+  "total_api_requests": 34,
+  "page": 1,
+  "total_pages": 1,
+  "has_more": false
+ }
+}

@@ -6,6 +6,13 @@ all usage data comes from the user's LiteLLM proxy, not from Anthropic's API.
 
 This file documents the engineering conventions for the project. Read it before contributing.
 
+## Layout
+
+- `crates/usage-core` — shared Rust core: SSO sign-in, LiteLLM client, secure token storage, usage cache.
+- `crates/ccline` — the Claude Code status line (`docs/ccline.md`).
+- The tray app (Tauri) comes later and reuses `usage-core`.
+- Test with `cargo test`; lint with `cargo clippy --all-targets`.
+
 ## Agent Instructions
 
 AGENTS.md is the source of truth for agent instructions in this repository. CLAUDE.md files may only point to the nearest AGENTS.md file with `@AGENTS.md`; do not add guidance, duplicate instructions, or project rules to CLAUDE.md.

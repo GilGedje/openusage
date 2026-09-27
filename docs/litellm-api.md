@@ -36,7 +36,7 @@ Credential Manager, Secret Service / keyring on Ubuntu), never in a plain file.
 | Endpoint | Result | Use |
 |---|---|---|
 | `GET /v2/user/info` | ✅ | Budget: `spend`, `max_budget`, `budget_duration`, `budget_reset_at`, per-model budgets (`model_max_budget`, `model_max_budget_usage`), `user_role`, `teams` |
-| `GET /user/daily/activity/aggregated?start_date=&end_date=` | ✅ | Daily usage with breakdowns (see below) |
+| `GET /user/daily/activity/aggregated?user_id=&start_date=&end_date=` | ✅ | Daily usage with breakdowns (see below). Non-admins must pass their own `user_id` |
 | `GET /user/daily/activity` | ✅ | Same, paginated |
 | `GET /user/spend/report?start_date=&end_date=` | ✅ | Spend per key with per-model totals |
 | `GET /user/info` | ✅ | Older, heavier version of `/v2/user/info` that also lists the user's keys |
@@ -46,7 +46,8 @@ Credential Manager, Secret Service / keyring on Ubuntu), never in a plain file.
 | `GET /key/info` | ❌ 404 | The SSO token isn't a stored key — use `/v2/user/info` instead |
 | `GET /key/spend/report` | ⚠️ empty | Same reason |
 
-Dates are `YYYY-MM-DD`. Add `include_current_utc_day=true` to include today.
+Dates are `YYYY-MM-DD`. To include today, add `include_current_utc_day=true` together with `timezone` —
+minutes *behind* UTC, JavaScript style (Israel summer = `-180`). Days come back newest first.
 
 ## Reading the budget
 
