@@ -20,7 +20,7 @@ jobs:
       - name: Sample data (signed in, fresh numbers, no network needed)
         run: python tools/ci/demo_state.py "$env:APPDATA" "$env:LOCALAPPDATA"
       - name: Screenshots, light and dark
-        shell: pwsh
+        shell: powershell   # Windows PowerShell 5.1: Add-Type below needs its default .NET references
         run: |
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
           Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition @'
