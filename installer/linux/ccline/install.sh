@@ -26,11 +26,20 @@ fail() { printf '\nError: %s\n' "$*" >&2; exit 1; }
 [ -f "$HERE/install.conf" ] || fail "install.conf is missing next to install.sh."
 # shellcheck disable=SC1091
 . "$HERE/install.conf"
-: "${LITELLM_URL:=}" "${SETUP_CLAUDE_STATUSLINE:=yes}"
+: "${LITELLM_URL:=}" "${SETUP_CLAUDE_STATUSLINE:=yes}" "${CA_CERT:=}"
 case "$LITELLM_URL" in
   *example.internal*) fail "Edit install.conf first: replace the example address with your LiteLLM proxy." ;;
 esac
 [ -n "$LITELLM_URL" ] || fail "LITELLM_URL is empty in install.conf."
+
+# CA certificate: absolute path = use in place; otherwise a file in this folder, copied.
+CA_ARGS=""
+if [ -n "${CA_CERT:-}" ]; then
+  case "$CA_CERT" in
+    /*) [ -f "$CA_CERT" ] || fail "CA_CERT file not found: $CA_CERT"; CA_ARGS="--ca-cert $CA_CERT" ;;
+    *) [ -f "$HERE/$CA_CERT" ] || fail "CA_CERT file not found in this folder: $CA_CERT"; CA_ARGS="--ca-cert-copy $HERE/$CA_CERT" ;;
+  esac
+fi
 
 # --- Bundle checks -----------------------------------------------------------
 [ "$(uname -s)" = "Linux" ] || fail "This installer is for Ubuntu/Linux."
@@ -48,9 +57,10 @@ chmod 755 "$BIN_DIR/ccline"
 
 if [ "$SETUP_CLAUDE_STATUSLINE" = "yes" ]; then
   # shellcheck disable=SC2086
-  "$BIN_DIR/ccline" setup --url "$LITELLM_URL" $FORCE
+  "$BIN_DIR/ccline" setup --url "$LITELLM_URL" $CA_ARGS $FORCE
 else
-  "$BIN_DIR/ccline" setup --url "$LITELLM_URL" --no-statusline
+  # shellcheck disable=SC2086
+  "$BIN_DIR/ccline" setup --url "$LITELLM_URL" $CA_ARGS --no-statusline
 fi
 
 case ":$PATH:" in

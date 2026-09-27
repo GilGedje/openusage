@@ -20,11 +20,20 @@ fail() { printf '\nError: %s\n' "$*" >&2; exit 1; }
 [ -f "$HERE/install.conf" ] || fail "install.conf is missing next to install.sh."
 # shellcheck disable=SC1091
 . "$HERE/install.conf"
-: "${LITELLM_URL:=}" "${STATUS_URL:=}" "${START_AT_LOGIN:=yes}"
+: "${LITELLM_URL:=}" "${STATUS_URL:=}" "${START_AT_LOGIN:=yes}" "${CA_CERT:=}"
 case "$LITELLM_URL$STATUS_URL" in
   *example.internal*) fail "Edit install.conf first: replace the example addresses with your LiteLLM and status page." ;;
 esac
 [ -n "$LITELLM_URL" ] || fail "LITELLM_URL is empty in install.conf."
+
+# CA certificate: absolute path = use in place; otherwise a file in this folder, copied.
+CA_ARGS=""
+if [ -n "${CA_CERT:-}" ]; then
+  case "$CA_CERT" in
+    /*) [ -f "$CA_CERT" ] || fail "CA_CERT file not found: $CA_CERT"; CA_ARGS="--ca-cert $CA_CERT" ;;
+    *) [ -f "$HERE/$CA_CERT" ] || fail "CA_CERT file not found in this folder: $CA_CERT"; CA_ARGS="--ca-cert-copy $HERE/$CA_CERT" ;;
+  esac
+fi
 
 # --- This folder must match this machine ---------------------------------------
 [ "$(uname -s)" = "Linux" ] || fail "This installer is for Ubuntu."
@@ -59,8 +68,9 @@ $SUDO apt-get $APT_OPTS -qq update || fail "Couldn't read the packages in this f
 $SUDO env DEBIAN_FRONTEND=noninteractive apt-get $APT_OPTS install -y --no-remove "$APP_PKG" ||
   fail "Couldn't install the tray app from this folder. Nothing was removed; see the messages above."
 
-say "Saving your LiteLLM and status page addresses"
-litellm-usage --configure --url "$LITELLM_URL" --status-url "$STATUS_URL"
+say "Saving your LiteLLM and status page addresses (and CA certificate, if set)"
+# shellcheck disable=SC2086
+litellm-usage --configure --url "$LITELLM_URL" --status-url "$STATUS_URL" $CA_ARGS
 
 if [ "$START_AT_LOGIN" = "yes" ]; then
   mkdir -p "$HOME/.config/autostart"

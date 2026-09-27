@@ -15,6 +15,7 @@ pub mod refresh;
 pub mod secret;
 pub mod snapshot;
 pub mod sso;
+pub mod tls;
 
 pub use error::{Error, Result};
 

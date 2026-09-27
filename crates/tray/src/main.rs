@@ -105,10 +105,17 @@ fn main() {
 
 fn configure(args: &[String]) -> i32 {
     let flag = |name: &str| args.iter().position(|a| a == name).and_then(|i| args.get(i + 1)).map(String::as_str);
-    match usage_core::account::configure(flag("--url"), flag("--status-url")) {
+    let setup = usage_core::account::Setup {
+        url: flag("--url"),
+        status_url: flag("--status-url"),
+        ca_cert: flag("--ca-cert").or(flag("--ca-cert-copy")),
+        copy_ca: flag("--ca-cert-copy").is_some(),
+    };
+    match usage_core::account::configure(setup) {
         Ok(config) => {
             println!("LiteLLM: {}", config.proxy_url.as_deref().unwrap_or("(not set)"));
             println!("Status page: {}", config.status_url.as_deref().unwrap_or("(not set)"));
+            println!("Extra CA: {}", config.ca_cert.as_deref().unwrap_or("(none)"));
             0
         }
         Err(e) => {

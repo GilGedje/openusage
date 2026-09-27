@@ -25,6 +25,9 @@ pub struct Config {
     /// The organization's service status page (like status.claude.com). Optional.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status_url: Option<String>,
+    /// Custom CA file (PEM) to trust for LiteLLM, on top of the system store. Optional.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ca_cert: Option<String>,
 }
 
 impl Config {

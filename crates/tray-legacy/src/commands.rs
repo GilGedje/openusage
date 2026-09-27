@@ -117,10 +117,17 @@ pub fn cancel_login(app: AppHandle) {
 /// `litellm-usage --configure --url <LiteLLM> [--status-url <page>]` (used by the installer).
 pub fn configure_from_args(args: &[String]) -> i32 {
     let flag = |name: &str| args.iter().position(|a| a == name).and_then(|i| args.get(i + 1)).map(String::as_str);
-    match account::configure(flag("--url"), flag("--status-url")) {
+    let setup = account::Setup {
+        url: flag("--url"),
+        status_url: flag("--status-url"),
+        ca_cert: flag("--ca-cert").or(flag("--ca-cert-copy")),
+        copy_ca: flag("--ca-cert-copy").is_some(),
+    };
+    match account::configure(setup) {
         Ok(config) => {
             println!("LiteLLM: {}", config.proxy_url.as_deref().unwrap_or("(not set)"));
             println!("Status page: {}", config.status_url.as_deref().unwrap_or("(not set)"));
+            println!("Extra CA: {}", config.ca_cert.as_deref().unwrap_or("(none)"));
             0
         }
         Err(e) => {

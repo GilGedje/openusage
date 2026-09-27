@@ -20,6 +20,7 @@ Install ccline (PowerShell, as the user — replace the address)
   New-Item -ItemType Directory -Force $dir | Out-Null
   Copy-Item .\ccline\ccline.exe $dir
   & "$dir\ccline.exe" setup --url https://your-litellm-proxy
+  (internal certificate? add:  --ca-cert C:\path\to\company-ca.pem)
   & "$dir\ccline.exe" login
   -> "setup" saves the address and adds the status line to %USERPROFILE%\.claude\settings.json
      (backup kept as settings.json.bak-ccline). "login" opens your browser for SSO; type the code
@@ -30,6 +31,7 @@ Install the tray app (PowerShell, as the user — replace the addresses)
   New-Item -ItemType Directory -Force $dir | Out-Null
   Copy-Item .\tray\litellm-usage.exe $dir
   & "$dir\litellm-usage.exe" --configure --url https://your-litellm-proxy --status-url https://your-status-page
+  (internal certificate? add:  --ca-cert C:\path\to\company-ca.pem)
   Start-Process "$dir\litellm-usage.exe"
   -> "--configure" saves the addresses (it prints nothing on Windows; exit code 0 means OK).
      Click the ring icon in the taskbar's notification area, then Sign In.

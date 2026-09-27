@@ -111,6 +111,7 @@ fn orange(text: &str) -> String {
 fn short_error(kind: &str) -> &'static str {
     match kind {
         "network" => "can't reach proxy",
+        "certificate" => "certificate not trusted (see CA_CERT)",
         "keyring" => "secure storage unavailable",
         "needs_approval" => "run `ccline status` to allow Keychain access",
         "http" => "proxy error",

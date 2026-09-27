@@ -15,6 +15,7 @@ pub struct Client {
 impl Client {
     pub fn new(base_url: &str, token: Option<&str>) -> Client {
         let config = ureq::Agent::config_builder()
+            .tls_config(crate::tls::tls_config())
             .http_status_as_error(false)
             .timeout_global(Some(Duration::from_secs(15)))
             .build();
@@ -60,7 +61,10 @@ impl Client {
 }
 
 fn read<T: DeserializeOwned>(result: std::result::Result<ureq::http::Response<ureq::Body>, ureq::Error>) -> Result<T> {
-    let mut resp = result.map_err(|e| Error::Network(e.to_string()))?;
+    let mut resp = result.map_err(|e| {
+        let message = e.to_string();
+        if crate::tls::is_untrusted(&message) { Error::Certificate(message) } else { Error::Network(message) }
+    })?;
     let status = resp.status().as_u16();
     let body = resp.body_mut().read_to_string().map_err(|e| Error::Network(e.to_string()))?;
     if status == 401 {

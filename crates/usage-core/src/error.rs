@@ -16,6 +16,8 @@ pub enum Error {
     Http { status: u16, message: String },
     /// The proxy could not be reached.
     Network(String),
+    /// The proxy's TLS certificate isn't trusted on this machine (usually an internal CA).
+    Certificate(String),
     /// The proxy answered with a body we could not read.
     Parse(String),
     Io(String),
@@ -32,6 +34,7 @@ impl Error {
             Error::NeedsApproval => "needs_approval",
             Error::Http { .. } => "http",
             Error::Network(_) => "network",
+            Error::Certificate(_) => "certificate",
             Error::Parse(_) => "parse",
             Error::Io(_) => "io",
             Error::Invalid(_) => "invalid",
@@ -51,6 +54,17 @@ impl fmt::Display for Error {
             ),
             Error::Http { status, message } => write!(f, "LiteLLM returned {status}: {message}"),
             Error::Network(m) => write!(f, "Can't reach LiteLLM: {m}"),
+            Error::Certificate(m) if m.contains("not valid for name") => write!(
+                f,
+                "LiteLLM's certificate was issued for a different address than the one configured. Use the \
+                 exact address on the certificate (see LITELLM_URL). ({m})"
+            ),
+            Error::Certificate(m) => write!(
+                f,
+                "LiteLLM's certificate isn't trusted on this machine. Set CA_CERT in install.conf to your \
+                 organization's CA file (or run `ccline setup --ca-cert <file>`), or ask IT to add the CA \
+                 to the system certificates. ({m})"
+            ),
             Error::Parse(m) => write!(f, "Unexpected response from LiteLLM: {m}"),
             Error::Io(m) => write!(f, "File error: {m}"),
             Error::Invalid(m) => write!(f, "{m}"),

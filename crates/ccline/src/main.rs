@@ -24,7 +24,8 @@ ccline — Claude Code status line for your LiteLLM budget and usage
 USAGE:
   ccline                    Print the status line (Claude Code runs this)
   ccline login [--url URL]  Sign in with SSO (URL defaults to ANTHROPIC_BASE_URL)
-  ccline setup [--url URL] [--status-url URL] [--force] [--no-statusline]
+  ccline setup [--url URL] [--status-url URL] [--ca-cert FILE | --ca-cert-copy FILE]
+               [--force] [--no-statusline]
                             Save the LiteLLM / status page addresses and set up
                             Claude Code's status line (used by the installer)
   ccline logout             Sign out and forget the saved sign-in
@@ -44,6 +45,8 @@ fn main() -> ExitCode {
         Some("setup") => setup::run(setup::Options {
             url: flag_value(&args[1..], "--url"),
             status_url: flag_value(&args[1..], "--status-url"),
+            ca_cert: flag_value(&args[1..], "--ca-cert").or_else(|| flag_value(&args[1..], "--ca-cert-copy")),
+            copy_ca: flag_value(&args[1..], "--ca-cert-copy").is_some(),
             force: args.iter().any(|a| a == "--force"),
             no_statusline: args.iter().any(|a| a == "--no-statusline"),
         }),

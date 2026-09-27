@@ -10,6 +10,9 @@ use usage_core::{Error, Result, account};
 pub struct Options {
     pub url: Option<String>,
     pub status_url: Option<String>,
+    /// Custom CA file (PEM) to trust; `copy_ca` copies it next to the settings.
+    pub ca_cert: Option<String>,
+    pub copy_ca: bool,
     /// Replace a status line that isn't ccline's.
     pub force: bool,
     /// Only save the addresses; leave Claude Code's settings alone.
@@ -17,9 +20,15 @@ pub struct Options {
 }
 
 pub fn run(opts: Options) -> Result<()> {
-    let config = account::configure(opts.url.as_deref(), opts.status_url.as_deref())?;
+    let config = account::configure(account::Setup {
+        url: opts.url.as_deref(),
+        status_url: opts.status_url.as_deref(),
+        ca_cert: opts.ca_cert.as_deref(),
+        copy_ca: opts.copy_ca,
+    })?;
     println!("LiteLLM: {}", config.proxy_url.as_deref().unwrap_or("(not set)"));
     println!("Status page: {}", config.status_url.as_deref().unwrap_or("(not set)"));
+    println!("Extra CA: {}", config.ca_cert.as_deref().unwrap_or("(none — system certificates only)"));
 
     if !opts.no_statusline {
         let settings = claude_settings_path();

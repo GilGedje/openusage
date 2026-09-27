@@ -8,7 +8,8 @@ What's inside
   SHA256SUMS            Integrity check
 
 For the admin, once
-  Edit install.conf: set LITELLM_URL and STATUS_URL (or leave STATUS_URL empty), then hand the
+  If LiteLLM uses your organization's own certificate, set CA_CERT in install.conf (a path on the
+  machines, or put the CA file in this folder and give its name). Then edit the rest of install.conf: set LITELLM_URL and STATUS_URL (or leave STATUS_URL empty), then hand the
   folder to users.
 
 For each user

@@ -24,7 +24,7 @@ pub fn save_sign_in(proxy_url: &str, token: &str, user_id: &str, team_id: Option
         user_id: Some(user_id.to_string()),
         team_id,
         signed_in_at: Some(crate::now()),
-        status_url: Config::load()?.status_url,
+        ..Config::load()?
     }
     .save()?;
     cache::clear()
@@ -36,13 +36,26 @@ pub fn sign_out() -> Result<()> {
     if let Some(url) = &config.proxy_url {
         secret::delete(url)?;
     }
-    Config { proxy_url: config.proxy_url, status_url: config.status_url, ..Config::default() }.save()?;
+    Config { proxy_url: config.proxy_url, status_url: config.status_url, ca_cert: config.ca_cert, ..Config::default() }
+        .save()?;
     cache::clear()
 }
 
-/// Saves the addresses an installer was given. A new proxy address drops the old sign-in details
-/// (they belong to the old proxy); `None` leaves a value unchanged.
-pub fn configure(url: Option<&str>, status_url: Option<&str>) -> Result<Config> {
+/// What an installer passes in. `None` leaves a setting unchanged; an empty string clears it.
+#[derive(Debug, Default)]
+pub struct Setup<'a> {
+    pub url: Option<&'a str>,
+    pub status_url: Option<&'a str>,
+    /// Custom CA file to trust (PEM). Used in place unless `copy_ca`.
+    pub ca_cert: Option<&'a str>,
+    /// Copy the CA file next to the settings instead of pointing at it.
+    pub copy_ca: bool,
+}
+
+/// Saves what an installer was given. A new proxy address drops the old sign-in details (they
+/// belong to the old proxy).
+pub fn configure(setup: Setup) -> Result<Config> {
+    let Setup { url, status_url, ca_cert, copy_ca } = setup;
     let mut config = Config::load()?;
     if let Some(url) = url {
         let url = normalize_url(url)?;
@@ -62,6 +75,13 @@ pub fn configure(url: Option<&str>, status_url: Option<&str>) -> Result<Config> 
         } else {
             return Err(Error::Invalid(format!("Status page must start with http:// or https:// (got `{status}`)")));
         }
+    }
+    if let Some(ca) = ca_cert.map(str::trim) {
+        config.ca_cert = if ca.is_empty() {
+            None
+        } else {
+            Some(crate::tls::prepare_ca(std::path::Path::new(ca), copy_ca)?.to_string_lossy().into_owned())
+        };
     }
     config.save()?;
     Ok(config)
