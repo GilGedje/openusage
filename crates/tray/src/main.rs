@@ -56,8 +56,11 @@ fn main() {
 
             tray_icon::install(app)?;
 
-            // For testing: open the panel right away.
-            if std::env::var_os("LITELLM_USAGE_OPEN_PANEL").is_some() {
+            // For testing: open the panel right away (`pin` also keeps it open without focus).
+            if let Some(mode) = std::env::var_os("LITELLM_USAGE_OPEN_PANEL") {
+                if mode == "pin" {
+                    app.state::<AppState>().pinned.store(true, std::sync::atomic::Ordering::Relaxed);
+                }
                 panel::show(app.handle(), None);
             }
 
@@ -71,7 +74,10 @@ fn main() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            if let tauri::WindowEvent::Focused(false) = event {
+            let pinned = window.app_handle().state::<AppState>().pinned.load(std::sync::atomic::Ordering::Relaxed);
+            if let tauri::WindowEvent::Focused(false) = event
+                && !pinned
+            {
                 panel::hide(window.app_handle());
             }
         })

@@ -54,12 +54,21 @@ jobs:
           $shell = New-Object -ComObject Shell.Application
           $theme = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
           New-Item -Force -Path $theme | Out-Null
+          # Windows 11 hides new tray icons behind the ^ arrow. Run once so Windows registers the icon,
+          # then promote it onto the taskbar (the same per-user setting the Windows installer should set).
+          $first = Start-Process -PassThru target\release\litellm-usage.exe
+          Start-Sleep -Seconds 8
+          Stop-Process -Id $first.Id -Force
+          Get-ChildItem 'HKCU:\Control Panel\NotifyIconSettings' -ErrorAction SilentlyContinue | ForEach-Object {
+            $exe = (Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue).ExecutablePath
+            if ($exe -like '*litellm-usage.exe') { Set-ItemProperty $_.PSPath -Name IsPromoted -Value 1 -Type DWord; Write-Host "promoted tray icon $exe" }
+          }
           foreach ($mode in @(@{n='light';v=1}, @{n='dark';v=0})) {
             Set-ItemProperty -Path $theme -Name AppsUseLightTheme -Value $mode.v -Type DWord
             Set-ItemProperty -Path $theme -Name SystemUsesLightTheme -Value $mode.v -Type DWord
             $shell.MinimizeAll()   # the runner's console window would cover the panel
             Start-Sleep -Seconds 2
-            $env:LITELLM_USAGE_OPEN_PANEL = '1'
+            $env:LITELLM_USAGE_OPEN_PANEL = 'pin'   # open, and stay open without focus
             $p = Start-Process -PassThru target\release\litellm-usage.exe
             Start-Sleep -Seconds 12
             if ($p.HasExited) { Write-Host "app exited with code $($p.ExitCode)" } else { Write-Host "app running (pid $($p.Id))" }

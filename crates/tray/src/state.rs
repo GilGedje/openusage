@@ -17,6 +17,9 @@ pub struct AppState {
     pub login: Mutex<LoginState>,
     /// When the panel was last hidden by losing focus (a tray click also blurs it first).
     pub last_hidden: Mutex<Option<Instant>>,
+    /// Test mode (`LITELLM_USAGE_OPEN_PANEL=pin`): keep the panel open when it loses focus, e.g.
+    /// on a Windows machine where a script-started app isn't allowed to take focus.
+    pub pinned: std::sync::atomic::AtomicBool,
     /// Where the tray was clicked (Linux reports it); the panel opens next to it.
     pub anchor: Mutex<Option<(i32, i32)>>,
     /// The StatusNotifierItem icon, when used (Linux).
