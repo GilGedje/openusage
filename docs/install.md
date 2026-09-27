@@ -37,24 +37,31 @@ Older Ubuntu (20.04) isn't supported: it lacks WebKitGTK 4.1, which the tray app
 **macOS**
 - Nothing extra. Sign-in token: Keychain. Each new unsigned build asks once for Keychain access.
 
-## Ubuntu: offline bundle
+## Ubuntu: offline installers
 
-Each bundle (`litellm-usage-ubuntu-<arch>.tar.gz`, built by the **Bundles** GitHub workflow) holds:
-`ccline`, the tray `.deb`, `install.sh`, `install.conf`, `README.txt`, `SHA256SUMS`, `ARCH`.
+There are two independent folders (built by the **Bundles** GitHub workflow, one download each). Users
+can install either or both; they share one sign-in and one set of addresses.
 
-1. **Admin, once:** edit `install.conf`:
-   - `LITELLM_URL` — your LiteLLM proxy (the address Claude Code uses as `ANTHROPIC_BASE_URL`)
-   - `STATUS_URL` — your status page, or `""` to hide the Status link
-   - `INSTALL_TRAY`, `START_TRAY_AT_LOGIN`, `SETUP_CLAUDE_STATUSLINE` — `yes` / `no`
+| Folder | Contents | Installs | Needs sudo |
+|---|---|---|---|
+| `litellm-usage-tray-ubuntu-<arch>/` | tray `.deb`, `install.sh`, `install.conf`, `README.txt`, `SHA256SUMS`, `ARCH` | the tray app, autostart at login | yes (apt) |
+| `ccline-ubuntu-<arch>/` | `ccline`, `install.sh`, `install.conf`, `README.txt`, `SHA256SUMS`, `ARCH` | `ccline` in `~/.local/bin`, Claude Code status line | no |
 
-   The installer refuses to run while the example addresses are still there.
-2. **Each user:** unpack and run `./install.sh` (not with sudo). It:
-   1. checks the files against `SHA256SUMS` and the CPU type,
-   2. installs `ccline` to `~/.local/bin` and saves the two addresses,
-   3. adds the status line to `~/.claude/settings.json` (backup kept as `settings.json.bak-ccline`;
-      it won't replace someone else's status line unless run with `--force`),
-   4. installs the tray `.deb` with `sudo apt-get install` (libraries from your mirror) and adds it to
-      autostart,
-   5. starts the tray and runs `ccline login` — the user signs in with SSO in the browser.
+1. **Admin, once:** edit each folder's `install.conf`:
+   - tray: `LITELLM_URL`, `STATUS_URL` (or `""` to hide the Status link), `START_AT_LOGIN`
+   - ccline: `LITELLM_URL`, `SETUP_CLAUDE_STATUSLINE`
 
-   `--no-login` skips step 5; users can sign in later from the tray panel.
+   Each installer refuses to run while the example addresses are still there. `SHA256SUMS` covers
+   every file except `install.conf`, so editing it doesn't break the check.
+2. **Each user:** unpack a folder and run `./install.sh` (not with sudo).
+   - **Tray:** checks the files and CPU type, installs the `.deb` with `sudo apt-get install`
+     (libraries from your mirror), saves the addresses (`litellm-usage --configure`), adds autostart,
+     and opens the panel — the user clicks **Sign In** and finishes in the browser.
+   - **ccline:** checks the files, installs `ccline`, saves the address, adds the status line to
+     `~/.claude/settings.json` (backup kept as `settings.json.bak-ccline`; `--force` replaces someone
+     else's status line), then signs in with `ccline login` — skipped when already signed in through
+     the tray. `--no-login` skips it.
+
+Tested end to end on an Ubuntu 24.04 desktop (screenshots in `docs/screenshots/ubuntu-*.png`):
+placeholder guard, install, sign-in from the panel (including a timed-out code and retry), tray
+menu → panel, light and dark, then the ccline folder reusing the tray's sign-in.
