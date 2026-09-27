@@ -23,10 +23,18 @@ LiteLLM has a device-style login for desktop and command-line apps. No API key i
    - The token is single-use to collect: once returned, the login session is deleted.
 4. Send the token on every request as `Authorization: Bearer <token>`.
 
-The token lasts 24 hours by default. The proxy admin can raise it with
-`LITELLM_CLI_JWT_EXPIRATION_HOURS`. There is no refresh token: when a request returns `401`, sign in
-again. With `general_settings.allow_cli_sso_verification_uri_complete: true`, `/sso/cli/start` also
-returns `verification_uri_complete` (a link with the code filled in), so signing in again is one click.
+The token lasts 24 hours by default. There is no refresh token: when a request returns `401`, sign in
+again. Two proxy settings improve this, and both work with the apps **with no code change** (verified
+live on 1.99.1):
+
+- `LITELLM_CLI_JWT_EXPIRATION_HOURS=336` — **environment variable** on the proxy. New sign-ins then
+  last 14 days (confirmed by decrypting a fresh token: expiry exactly 336 hours out). Existing tokens
+  keep their old expiry.
+- `allow_cli_sso_verification_uri_complete: true` — under `general_settings` in the proxy's
+  **config.yaml**. `/sso/cli/start` then also returns `verification_uri_complete` (the sign-in link
+  with `&user_code=…` filled in); the apps already open that link, so signing in is one click. The
+  link uses `PROXY_BASE_URL`, so set that to the address users reach. LiteLLM keeps this off by
+  default because a pre-filled link can be forwarded as a phishing lure.
 
 The token can also run models, so it's stored in the OS secure storage (macOS Keychain, Windows
 Credential Manager, Secret Service / keyring on Ubuntu), never in a plain file.

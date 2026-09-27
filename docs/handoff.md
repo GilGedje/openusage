@@ -28,7 +28,7 @@ remain. It is **not** OpenUsage and must not use its name or logo.
 | Data source | **LiteLLM only** — never Anthropic's API |
 | Sign-in | **SSO only**, LiteLLM's device flow. **No API keys**, and never silently create one |
 | Token storage | OS secure storage only (Keychain / Credential Manager / GNOME Keyring). Never a plain file |
-| Token lifetime | Default 24h is fine for now; owner will set `LITELLM_CLI_JWT_EXPIRATION_HOURS` and `allow_cli_sso_verification_uri_complete` on the proxy later |
+| Token lifetime | Proxy sets `LITELLM_CLI_JWT_EXPIRATION_HOURS=336` (env) and `allow_cli_sso_verification_uri_complete: true` (config.yaml) — verified working with no code change; set on the owner's local proxy (backups `*.bak-20260927-191038` in `~/Exodus-Ai Project/litellm-local`) |
 | Network | **Everything local/offline**: no fonts, icons or scripts from the internet; apps only talk to the configured LiteLLM + status page |
 | Rollout | **Install scripts** with placeholder addresses (not MDM), shipped as offline folders |
 | Packaging | **Two separate folders**: tray app and `ccline`, each with its own installer and settings |
