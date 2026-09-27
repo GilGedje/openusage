@@ -1,14 +1,10 @@
 # Tray app for Ubuntu 20.04: Tauri 1 (WebKitGTK 4.0), same panel UI and shared logic as crates/tray.
 # Its own workspace: Tauri 1 and Tauri 2 can't be in one build graph.
 [package]
-name = "litellm-usage-tray-legacy"
+name = "litellm-usage"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-
-[[bin]]
-name = "litellm-usage"
-path = "src/main.rs"
 
 [workspace]
 

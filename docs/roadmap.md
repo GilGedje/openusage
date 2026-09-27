@@ -15,6 +15,8 @@ Everything left to do, with how to build it. Tick items off here as they land.
   `ccline setup` (saves addresses, adds the Claude Code status line safely), Bundles workflow
   (`docs/install.md`). Tested end to end on an Ubuntu 24.04 desktop in Docker: install, SSO sign-in,
   tray menu → panel, light and dark (`docs/screenshots/ubuntu-*.png`)
+- Fully offline Ubuntu installers for 20.04, 22.04, 24.04, 26.04 (tray folder per release with all
+  libraries; ccline for 20.04+); Tauri 1 tray build for 20.04; verified offline on all four
 - CI workflow for Windows / Ubuntu / macOS (`.github/workflows/ci.yml`, not yet pushed)
 - Verified: macOS end to end; Ubuntu end to end (Docker desktop, arm64); Windows not yet built
 

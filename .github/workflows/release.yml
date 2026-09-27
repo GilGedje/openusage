@@ -1,7 +1,10 @@
 name: Bundles
 
-# Builds the offline install bundles. Runs on version tags, manually, and on the working branch so
-# every push has downloadable bundles under the run's artifacts.
+# Builds the fully offline Ubuntu installer folders:
+#   ccline-ubuntu-<arch>                       one folder for Ubuntu 20.04 and newer
+#   litellm-usage-tray-ubuntu-<release>-<arch> the tray app + every library it needs, per release
+# Runs on the working branch (artifacts on each run), on version tags (attached to a Release), and
+# manually.
 on:
   push:
     branches: [litellm-usage]
@@ -12,45 +15,117 @@ permissions:
   contents: write
 
 jobs:
-  ubuntu:
+  ccline:
     strategy:
       fail-fast: false
       matrix:
-        # Build on the oldest supported Ubuntu so the binaries run on 22.04 and newer.
+        runner: [ubuntu-22.04, ubuntu-22.04-arm]
+    runs-on: ${{ matrix.runner }}
+    # Built on the oldest supported release so it runs on 20.04 and newer.
+    container: ubuntu:20.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl ca-certificates build-essential pkg-config
+          curl -sSf https://sh.rustup.rs | sh -s -- -y -q --profile minimal
+      - name: Build
+        run: . "$HOME/.cargo/env" && cargo build --release -p ccline
+      - name: Folder
+        run: sh installer/linux/make-bundle.sh ccline target/release/ccline dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ccline-ubuntu-${{ runner.arch }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  tray-deb:
+    # Tauri 2 tray (WebKitGTK 4.1) for Ubuntu 22.04 and newer.
+    strategy:
+      fail-fast: false
+      matrix:
         runner: [ubuntu-22.04, ubuntu-22.04-arm]
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Linux libraries for the tray app (Tauri)
+      - name: Libraries
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev build-essential
-      - name: Build ccline
-        run: cargo build --release -p ccline
-      - name: Build tray .deb
+      - name: Build
         working-directory: crates/tray
         run: npx --yes @tauri-apps/cli@2 build --bundles deb
-      - name: Assemble bundle
+      - run: cp target/release/bundle/deb/*.deb tray.deb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tray-deb-${{ runner.arch }}
+          path: tray.deb
+
+  tray-deb-2004:
+    # Tauri 1 tray (WebKitGTK 4.0) for Ubuntu 20.04.
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-22.04, ubuntu-22.04-arm]
+    runs-on: ${{ matrix.runner }}
+    container: ubuntu:20.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain and libraries
         run: |
-          DEB=$(ls target/release/bundle/deb/*.deb | head -n 1)
-          sh installer/linux/make-bundle.sh target/release/ccline "$DEB" dist
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl ca-certificates build-essential pkg-config libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev file
+          curl -sSf https://sh.rustup.rs | sh -s -- -y -q --profile minimal
+          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+          apt-get install -y -qq nodejs
+      - name: Build
+        working-directory: crates/tray-legacy
+        run: . "$HOME/.cargo/env" && npx --yes @tauri-apps/cli@1 build --bundles deb
+      - run: cp crates/tray-legacy/target/release/bundle/deb/*.deb tray.deb
       - uses: actions/upload-artifact@v4
         with:
-          name: ccline-ubuntu-${{ runner.arch }}
-          path: dist/ccline-ubuntu-*.tar.gz
-          if-no-files-found: error
+          name: tray-deb-2004-${{ runner.arch }}
+          path: tray.deb
+
+  tray-folders:
+    needs: [tray-deb, tray-deb-2004]
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-22.04, ubuntu-22.04-arm]
+        release: ["20.04", "22.04", "24.04", "26.04"]
+    runs-on: ${{ matrix.runner }}
+    # Collect the libraries inside the target release, so the folder matches it exactly.
+    container: ubuntu:${{ matrix.release }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.release == '20.04' && 'tray-deb-2004' || 'tray-deb' }}-${{ runner.arch }}
+      - name: Offline packages
+        run: sh installer/linux/fetch-deps.sh tray.deb packages
+      - name: Folder
+        run: sh installer/linux/make-bundle.sh tray ${{ matrix.release }} packages dist
       - uses: actions/upload-artifact@v4
         with:
-          name: litellm-usage-tray-ubuntu-${{ runner.arch }}
-          path: dist/litellm-usage-tray-ubuntu-*.tar.gz
+          name: litellm-usage-tray-ubuntu-${{ matrix.release }}-${{ runner.arch }}
+          path: dist/*.tar.gz
           if-no-files-found: error
-      - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+          compression-level: 0
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [ccline, tray-folders]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
         with:
           files: dist/*.tar.gz
