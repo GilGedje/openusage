@@ -41,8 +41,13 @@ jobs:
           sh installer/linux/make-bundle.sh target/release/ccline "$DEB" dist
       - uses: actions/upload-artifact@v4
         with:
-          name: litellm-usage-ubuntu-${{ runner.arch }}
-          path: dist/*.tar.gz
+          name: ccline-ubuntu-${{ runner.arch }}
+          path: dist/ccline-ubuntu-*.tar.gz
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: litellm-usage-tray-ubuntu-${{ runner.arch }}
+          path: dist/litellm-usage-tray-ubuntu-*.tar.gz
           if-no-files-found: error
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/v')

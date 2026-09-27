@@ -5,8 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde_json::{Map, Value, json};
-use usage_core::config::{Config, normalize_url};
-use usage_core::{Error, Result};
+use usage_core::{Error, Result, account};
 
 pub struct Options {
     pub url: Option<String>,
@@ -18,25 +17,7 @@ pub struct Options {
 }
 
 pub fn run(opts: Options) -> Result<()> {
-    let mut config = Config::load()?;
-    if let Some(url) = &opts.url {
-        let url = normalize_url(url)?;
-        if config.proxy_url.as_deref() != Some(url.as_str()) {
-            // A different proxy: the old sign-in doesn't apply there.
-            config.user_id = None;
-            config.team_id = None;
-            config.signed_in_at = None;
-        }
-        config.proxy_url = Some(url);
-    }
-    if let Some(status) = &opts.status_url {
-        let status = status.trim().trim_end_matches('/').to_string();
-        if !(status.starts_with("https://") || status.starts_with("http://")) {
-            return Err(Error::Invalid(format!("Status page must start with http:// or https:// (got `{status}`)")));
-        }
-        config.status_url = Some(status);
-    }
-    config.save()?;
+    let config = account::configure(opts.url.as_deref(), opts.status_url.as_deref())?;
     println!("LiteLLM: {}", config.proxy_url.as_deref().unwrap_or("(not set)"));
     println!("Status page: {}", config.status_url.as_deref().unwrap_or("(not set)"));
 

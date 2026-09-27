@@ -21,6 +21,13 @@ use crate::state::AppState;
 const TICK: Duration = Duration::from_secs(15);
 
 fn main() {
+    // Installer hook: `litellm-usage --configure --url <LiteLLM> [--status-url <page>]` saves the
+    // addresses and exits without starting the app.
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().map(String::as_str) == Some("--configure") {
+        std::process::exit(configure(&args[1..]));
+    }
+
     // WebKitGTK's DMA-BUF renderer shows a blank window in many VMs and with some GPU drivers.
     #[cfg(target_os = "linux")]
     if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
@@ -94,4 +101,19 @@ fn main() {
         })
         .run(tauri::generate_context!())
         .expect("failed to start LiteLLM Usage");
+}
+
+fn configure(args: &[String]) -> i32 {
+    let flag = |name: &str| args.iter().position(|a| a == name).and_then(|i| args.get(i + 1)).map(String::as_str);
+    match usage_core::account::configure(flag("--url"), flag("--status-url")) {
+        Ok(config) => {
+            println!("LiteLLM: {}", config.proxy_url.as_deref().unwrap_or("(not set)"));
+            println!("Status page: {}", config.status_url.as_deref().unwrap_or("(not set)"));
+            0
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            1
+        }
+    }
 }

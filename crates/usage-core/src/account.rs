@@ -2,6 +2,7 @@
 //! code, choosing a team) stay in each app; see `sso` for the login protocol.
 
 use crate::config::{Config, normalize_url};
+
 use crate::{Error, Result, cache, secret};
 
 /// The proxy to sign in to: an explicit URL, else `ANTHROPIC_BASE_URL`, else the last one used.
@@ -37,4 +38,31 @@ pub fn sign_out() -> Result<()> {
     }
     Config { proxy_url: config.proxy_url, status_url: config.status_url, ..Config::default() }.save()?;
     cache::clear()
+}
+
+/// Saves the addresses an installer was given. A new proxy address drops the old sign-in details
+/// (they belong to the old proxy); `None` leaves a value unchanged.
+pub fn configure(url: Option<&str>, status_url: Option<&str>) -> Result<Config> {
+    let mut config = Config::load()?;
+    if let Some(url) = url {
+        let url = normalize_url(url)?;
+        if config.proxy_url.as_deref() != Some(url.as_str()) {
+            config.user_id = None;
+            config.team_id = None;
+            config.signed_in_at = None;
+        }
+        config.proxy_url = Some(url);
+    }
+    if let Some(status) = status_url {
+        let status = status.trim().trim_end_matches('/').to_string();
+        if status.is_empty() {
+            config.status_url = None;
+        } else if status.starts_with("https://") || status.starts_with("http://") {
+            config.status_url = Some(status);
+        } else {
+            return Err(Error::Invalid(format!("Status page must start with http:// or https:// (got `{status}`)")));
+        }
+    }
+    config.save()?;
+    Ok(config)
 }
