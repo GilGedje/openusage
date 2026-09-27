@@ -13,7 +13,7 @@ internet and only talk to the LiteLLM and status page addresses you configure.
 | `ccline` (status line) | ✅ one build for all four | ✅ | ✅ |
 | Tray app | ✅ one folder per release | ✅ | ✅ |
 | Offline installer | ✅ | planned (`install.ps1` + `.msi`) | planned |
-| Tested for real | offline install on 20.04, 22.04, 24.04, 26.04 desktops (Docker, arm64); SSO + panel on 24.04 | CI build only | yes |
+| Tested for real | offline install on 20.04–26.04: desktops (arm64) and bare systems (x86_64, emulated); SSO + panel on 24.04 | CI build + test; `.exe` dependencies checked | yes |
 
 The tray app runs on two engines: Ubuntu 22.04 and newer use Tauri 2 (WebKitGTK 4.1); Ubuntu 20.04,
 which only has WebKitGTK 4.0, gets a Tauri 1 build of the same app (`crates/tray-legacy`). Same panel,
@@ -83,3 +83,14 @@ install from the folder, then `ldd` on the app and WebKit's helper processes sho
 libraries and the tray runs. On 24.04 also: SSO sign-in from the panel, tray menu → panel, light and
 dark, and the ccline folder reusing the tray's sign-in (`docs/screenshots/ubuntu-*.png`). `ccline`
 was run on all four releases offline.
+
+The x86_64 folders built by GitHub were also installed on **bare** 20.04, 22.04, 24.04 and 26.04
+systems (no desktop at all, emulated x86_64, no network, no apt lists): 178–228 packages installed
+from each folder, zero missing libraries, and the app started.
+
+## Windows: early build
+
+`windows-x64/` (from the CI run) has `ccline\ccline.exe` and `tray\litellm-usage.exe` with manual
+steps in `installer/windows/README.txt`. Their DLL imports were checked: both use only DLLs built
+into Windows 10/11 (the VC++ runtime is linked in), so the only outside need is WebView2 Runtime for
+the tray. Not yet run on a real Windows machine.
