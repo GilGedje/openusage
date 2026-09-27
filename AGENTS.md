@@ -6,11 +6,15 @@ all usage data comes from the user's LiteLLM proxy, not from Anthropic's API.
 
 This file documents the engineering conventions for the project. Read it before contributing.
 
+**Picking this up? Read `docs/handoff.md` first** — owner decisions, architecture, build/test/ship,
+known gotchas, open questions, and next steps.
+
 ## Layout
 
 - `crates/usage-core` — shared Rust core: SSO sign-in, LiteLLM client, secure token storage, usage cache.
 - `crates/ccline` — the Claude Code status line (`docs/ccline.md`).
-- The tray app (Tauri) comes later and reuses `usage-core`.
+- `crates/tray` — the Tauri tray app (`docs/tray.md`), reusing `usage-core`.
+- `installer/linux/{tray,ccline}` — offline installers (`docs/install.md`); `tools/` — test harnesses.
 - Test with `cargo test`; lint with `cargo clippy --all-targets`.
 
 ## Agent Instructions
@@ -46,6 +50,8 @@ Every PR description must follow this structure so reviewers can skim it quickly
 - Keep files under ~500 LOC; split or refactor as needed.
 - No new dependencies without justification.
 - Every change must work on Windows and Ubuntu (macOS too where possible). Never hardcode OS-specific paths or tools without a per-OS branch.
+- Air-gapped: never load anything from the internet at runtime (fonts, icons, scripts, telemetry). Apps only talk to the configured LiteLLM proxy and status page.
+- Sign-in is SSO only; never create or store API keys, and keep tokens in OS secure storage only.
 
 ## Error Handling
 

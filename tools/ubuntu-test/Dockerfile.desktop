@@ -1,0 +1,9 @@
+FROM ubuntu:24.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -qq && apt-get install -y -qq \
+      xvfb xfce4-panel xfwm4 xfdesktop4 xfce4-settings dbus-x11 gnome-keyring libsecret-tools \
+      xdotool imagemagick x11-utils sudo curl fonts-ubuntu adwaita-icon-theme-full procps \
+      >/dev/null && rm -rf /var/lib/apt/lists/*
+RUN useradd -m -s /bin/bash demo && echo 'demo ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/demo
+USER demo
+WORKDIR /home/demo
