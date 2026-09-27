@@ -148,10 +148,10 @@ const Views = {
 
   // --- Claude budget card --------------------------------------------------
 
-  // "Claude  $100 budget" (the user's total budget), with the Claude mark on the right.
+  // "Claude  $100" (the user's total budget), with the Claude mark on the right.
   accountHeader(snap) {
     const b = snap && snap.budget;
-    const total = b ? (b.max_budget > 0 ? `${Format.money(b.max_budget)} budget` : "No limit") : "";
+    const total = b ? (b.max_budget > 0 ? Format.wholeMoney(b.max_budget) : "No limit") : "";
     return `<div class="section-header-row">
         <div class="section-title">Claude${total ? ` <span class="subtitle num">${total}</span>` : ""}</div>
         <img class="brand-icon" src="claude.png" alt="" />
@@ -159,15 +159,19 @@ const Views = {
   },
 
   account(snap, now) {
-    const line = (t) => `${Format.money(t.spend)} · ${Format.tokens(t.tokens)} tokens`;
     const yesterday = snap.yesterday || { spend: 0, tokens: 0 };
+    // Label | cost | tokens, each in its own right-aligned column so the numbers line up.
+    const row = (label, t) => `
+          <span class="usage-label">${label}</span>
+          <span class="usage-cost num">${Format.money(t.spend)}</span>
+          <span class="usage-tokens num">${Format.tokens(t.tokens)} tokens</span>`;
     return `
       <div class="card account-card">
         ${this.budget(snap, now)}
-        <div class="text-rows">
-          <div class="text-row"><span>Today</span><span class="num">${line(snap.today)}</span></div>
-          <div class="text-row"><span>Yesterday</span><span class="num">${line(yesterday)}</span></div>
-          <div class="text-row"><span>Last 30 Days</span><span class="num">${line(snap.last_30d)}</span></div>
+        <div class="usage-table">
+          ${row("Today", snap.today)}
+          ${row("Yesterday", yesterday)}
+          ${row("Last 30 Days", snap.last_30d)}
         </div>
       </div>`;
   },
@@ -238,7 +242,7 @@ const Views = {
       : "";
     return `
       <div class="section-header-row settings-header">
-        <button class="back-button" data-action="close-settings" aria-label="Back">${Icons.back}<span>Back</span></button>
+        <button class="back-button" data-action="close-settings" aria-label="Back">${Icons.back}</button>
         <div class="section-title">Settings</div>
         <span class="header-spacer"></span>
       </div>

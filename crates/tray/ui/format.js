@@ -1,6 +1,11 @@
 // Number and time formatting shared by the views (mirrors ccline's formatting).
 
 const Format = {
+  // Whole amounts without cents: $100, $1,250 (for totals like the budget).
+  wholeMoney(v) {
+    return Number.isInteger(v) ? "$" + v.toLocaleString("en-US") : this.money(v);
+  },
+
   money(v) {
     if (v > 0 && v < 0.01) return "<$0.01";
     if (v >= 1000) return "$" + Math.round(v).toLocaleString("en-US");
