@@ -106,19 +106,19 @@ fn status_line() {
         Ok(c) => c,
         Err(e) => {
             log::error("config", &e.to_string());
-            println!("{}", render::line(&session, render::Usage::Failed("settings file unreadable"), now, columns));
+            println!("{}", render::line(&session, render::Usage::Failed("settings file unreadable"), now, columns, &Default::default()));
             return;
         }
     };
     let Some(proxy_url) = config.proxy_url else {
-        println!("{}", render::line(&session, render::Usage::NotConfigured, now, columns));
+        println!("{}", render::line(&session, render::Usage::NotConfigured, now, columns, &config.alerts));
         return;
     };
     let cached = cache::read().filter(|c| c.proxy_url == proxy_url);
     if refresh::is_due(cached.as_ref(), now) {
         spawn::refresh_detached();
     }
-    println!("{}", render::line(&session, render::Usage::Cached(cached.as_ref()), now, columns));
+    println!("{}", render::line(&session, render::Usage::Cached(cached.as_ref()), now, columns, &config.alerts));
 }
 
 /// Claude Code pipes session JSON on stdin; skip reading when run by hand in a terminal.

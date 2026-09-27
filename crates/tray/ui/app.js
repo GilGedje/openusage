@@ -99,6 +99,31 @@ const Motion = {
   },
 };
 
+// --- Alerts ------------------------------------------------------------------------------------
+// The user's warning/critical colors drive the budget bar (via the theme's meter tokens).
+function applyAlertColors(alerts) {
+  if (!alerts) return;
+  const root = document.documentElement.style;
+  root.setProperty("--meter-warning", alerts.warning_color);
+  root.setProperty("--meter-critical", alerts.critical_color);
+}
+
+async function saveAlerts(change) {
+  const a = { ...state.alerts, ...change };
+  try {
+    state = await invoke("save_alerts", {
+      warningPct: a.warning_pct,
+      warningColor: a.warning_color,
+      criticalPct: a.critical_pct,
+      criticalColor: a.critical_color,
+    });
+    if (settings) settings.alertError = null;
+  } catch (e) {
+    if (settings) settings.alertError = String(e);
+  }
+  render();
+}
+
 // --- Theme -------------------------------------------------------------------------------------
 function applyTheme(pref, animate) {
   const root = document.documentElement;
@@ -129,6 +154,8 @@ function render(hint = null, prev = {}) {
   const name = viewName();
   if (typing && name === shownView && (name === "settings" || name === "signin")) return;
 
+  applyAlertColors(state.alerts);
+  Views.currentAlerts = state.alerts;
   const html = {
     settings: () => Views.settings(state, { ...settings, theme }),
     waiting: () => Views.waiting(login),
@@ -217,6 +244,10 @@ async function act(action, el) {
       }
       break;
     }
+    case "alert-color": {
+      const level = el.dataset.level;
+      return saveAlerts({ [`${level}_color`]: el.dataset.color });
+    }
     case "theme": {
       const index = THEME_KEYS.indexOf(theme);
       theme = el.dataset.theme;
@@ -256,6 +287,14 @@ app.addEventListener("click", (e) => {
 
 app.addEventListener("input", (e) => {
   if (e.target.id === "proxy-url") draftUrl = e.target.value;
+});
+
+// Alert percentages save when the field is committed (Enter or leaving it), not on every keystroke.
+app.addEventListener("change", (e) => {
+  if (!e.target.classList.contains("pct-input")) return;
+  const value = Math.round(Number(e.target.value));
+  e.target.blur();
+  saveAlerts({ [`${e.target.dataset.level}_pct`]: value });
 });
 
 app.addEventListener("keydown", (e) => {

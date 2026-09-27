@@ -36,8 +36,8 @@ pub fn sign_out() -> Result<()> {
     if let Some(url) = &config.proxy_url {
         secret::delete(url)?;
     }
-    Config { proxy_url: config.proxy_url, status_url: config.status_url, ca_cert: config.ca_cert, ..Config::default() }
-        .save()?;
+    // Keep everything that isn't the sign-in itself.
+    Config { user_id: None, team_id: None, signed_in_at: None, ..config }.save()?;
     cache::clear()
 }
 
@@ -83,6 +83,14 @@ pub fn configure(setup: Setup) -> Result<Config> {
             Some(crate::tls::prepare_ca(std::path::Path::new(ca), copy_ca)?.to_string_lossy().into_owned())
         };
     }
+    config.save()?;
+    Ok(config)
+}
+
+/// Saves the budget alert levels and colors (Settings → Alerts).
+pub fn save_alerts(alerts: crate::alerts::Alerts) -> Result<Config> {
+    alerts.validate()?;
+    let config = Config { alerts, ..Config::load()? };
     config.save()?;
     Ok(config)
 }

@@ -55,7 +55,7 @@ fn start_sni() -> bool {
         settings: Box::new(with_app(show_settings)),
         quit: Box::new(with_app(|app| app.exit(0))),
     };
-    match sni_tray::SniTray::spawn(actions, &ring_rgba(None, false), SIZE, "Quota by Exodus.Ai") {
+    match sni_tray::SniTray::spawn(actions, &ring_rgba(None, false, &Default::default()), SIZE, "Quota by Exodus.Ai") {
         Ok(tray) => SNI.set(tray).is_ok(),
         Err(e) => {
             log::error("tray", &format!("no StatusNotifierItem host, using the menu-only icon: {e}"));
@@ -105,6 +105,7 @@ fn main() {
             commands::fit_height,
             commands::save_settings,
             commands::save_image,
+            commands::save_alerts,
             commands::start_login,
             commands::choose_team,
             commands::cancel_login,
@@ -146,7 +147,7 @@ fn tick(app: &AppHandle) {
 /// Sends the current state to the panel and updates the tray icon and tooltip.
 pub fn publish(app: &AppHandle) {
     let state = PanelState::current();
-    let rgba = ring_rgba(state.used_fraction(), false);
+    let rgba = ring_rgba(state.used_fraction(), false, &state.alerts);
     if let Some(sni) = SNI.get() {
         sni.update(&rgba, SIZE, &state.tooltip());
     } else {

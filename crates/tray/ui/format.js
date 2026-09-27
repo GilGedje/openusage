@@ -78,9 +78,12 @@ const Format = {
     return `Refreshes in ${m}:${s}`;
   },
 
-  severity(fraction) {
-    if (fraction >= 0.9) return "critical";
-    if (fraction >= 0.75) return "warning";
+  // Level for a share of the budget used, by the user's alert settings (defaults 75% / 90%).
+  severity(fraction, alerts) {
+    const warn = (alerts ? alerts.warning_pct : 75) / 100;
+    const crit = (alerts ? alerts.critical_pct : 90) / 100;
+    if (fraction >= crit) return "critical";
+    if (fraction >= warn) return "warning";
     return "normal";
   },
 

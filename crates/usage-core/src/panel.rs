@@ -27,6 +27,8 @@ pub struct PanelState {
     pub refresh_secs: i64,
     /// App version, shown at the bottom of Settings.
     pub version: &'static str,
+    /// Budget alert levels and colors.
+    pub alerts: crate::alerts::Alerts,
 }
 
 impl PanelState {
@@ -39,6 +41,7 @@ impl PanelState {
         let usage_url = config.proxy_url.as_deref().map(config::usage_page_url);
         let status_url = config.status_page();
         let ca_cert = config.ca_cert.clone();
+        let alerts = config.alerts.clone();
         PanelState {
             signed_in: config.user_id.is_some(),
             user_id: config.user_id,
@@ -51,6 +54,7 @@ impl PanelState {
             now: crate::now(),
             refresh_secs: crate::refresh::REFRESH_SECS,
             version: env!("CARGO_PKG_VERSION"),
+            alerts,
         }
     }
 

@@ -26,7 +26,7 @@ fn install_tauri(app: &App) -> tauri::Result<()> {
         Menu::with_items(app, &[&open, &refresh, &settings, &PredefinedMenuItem::separator(app)?, &quit])?;
 
     TrayIconBuilder::with_id(state::TRAY_ID)
-        .icon(gauge::icon(None))
+        .icon(gauge::icon(None, &Default::default()))
         .icon_as_template(cfg!(target_os = "macos"))
         .tooltip("Quota by Exodus.Ai")
         .menu(&menu)
@@ -60,7 +60,7 @@ fn install_sni(app: &AppHandle) -> bool {
         settings: Box::new(move || panel::show_settings(&c)),
         quit: Box::new(move || d.exit(0)),
     };
-    match sni_tray::SniTray::spawn(actions, &ring_rgba(None, false), SIZE, "Quota by Exodus.Ai") {
+    match sni_tray::SniTray::spawn(actions, &ring_rgba(None, false, &Default::default()), SIZE, "Quota by Exodus.Ai") {
         Ok(tray) => {
             if let Ok(mut slot) = app.state::<state::AppState>().sni.lock() {
                 *slot = Some(tray);
@@ -75,9 +75,9 @@ fn install_sni(app: &AppHandle) -> bool {
 }
 
 /// Updates whichever icon is in use.
-pub fn update(app: &AppHandle, fraction: Option<f64>, tooltip: &str) {
+pub fn update(app: &AppHandle, fraction: Option<f64>, tooltip: &str, alerts: &usage_core::alerts::Alerts) {
     if let Some(tray) = app.tray_by_id(state::TRAY_ID) {
-        let _ = tray.set_icon(Some(gauge::icon(fraction)));
+        let _ = tray.set_icon(Some(gauge::icon(fraction, alerts)));
         let _ = tray.set_icon_as_template(cfg!(target_os = "macos"));
         #[cfg(not(target_os = "windows"))]
         let _ = tray.set_title(fraction.map(|f| format!("{:.0}%", f * 100.0)).as_deref());
@@ -90,7 +90,7 @@ pub fn update(app: &AppHandle, fraction: Option<f64>, tooltip: &str) {
         if let Ok(slot) = app.state::<state::AppState>().sni.lock()
             && let Some(tray) = slot.as_ref()
         {
-            tray.update(&ring_rgba(fraction, false), SIZE, tooltip);
+            tray.update(&ring_rgba(fraction, false, alerts), SIZE, tooltip);
         }
     }
 }

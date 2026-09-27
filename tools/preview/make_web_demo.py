@@ -48,6 +48,7 @@ STUB = r"""
     signed_in: true, user_id: "demo", proxy_url: "https://litellm.example.internal",
     suggested_url: "https://litellm.example.internal", usage_url: "#", status_url: "#", ca_cert: null,
     refresh_secs: 300, version: "0.1.0", now: now(),
+    alerts: { warning_pct: 75, warning_color: "#ffd60a", critical_pct: 90, critical_color: "#ff453a" },
     cache: {
       proxy_url: "https://litellm.example.internal", error: null, last_attempt: now() - 83,
       snapshot: {
@@ -72,6 +73,13 @@ STUB = r"""
             state.cache.last_attempt = now(); state.cache.snapshot.fetched_at = now();
             return state;
           case "sign_out": state = { ...state, signed_in: false }; return state;
+          case "save_alerts": {
+            const a = { warning_pct: args.warningPct, warning_color: args.warningColor, critical_pct: args.criticalPct, critical_color: args.criticalColor };
+            if (!(a.warning_pct >= 1 && a.critical_pct <= 100)) throw "Alert levels must be between 1% and 100%.";
+            if (a.warning_pct >= a.critical_pct) throw "The warning level must be below the critical level.";
+            state.alerts = a;
+            return state;
+          }
           case "start_login":
             setTimeout(() => { state = JSON.parse(JSON.stringify(SIGNED_IN)); state.now = now(); emit("login", { status: "done" }); emit("state", state); }, 3500);
             return { code: "QX7M-4KD2", link: "#", proxy_url: state.proxy_url };

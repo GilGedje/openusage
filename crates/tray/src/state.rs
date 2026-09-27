@@ -46,6 +46,6 @@ pub fn tick(app: &AppHandle) {
 /// Sends the current state to the panel and updates the tray icon, title and tooltip.
 pub fn publish(app: &AppHandle) {
     let state = current();
-    crate::tray_icon::update(app, state.used_fraction(), &state.tooltip());
+    crate::tray_icon::update(app, state.used_fraction(), &state.tooltip(), &state.alerts);
     let _ = app.emit("state", &state);
 }

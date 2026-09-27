@@ -4,6 +4,8 @@
 use usage_core::cache::CacheFile;
 use usage_core::snapshot::Snapshot;
 
+use usage_core::alerts::Alerts;
+
 use crate::session::Session;
 
 const BLUE: &str = "\x1b[38;2;10;132;255m";
@@ -28,7 +30,7 @@ pub enum Usage<'a> {
 
 /// The status line: `Model · ctx 42% 84k/200k · ▰▰▰▱▱ $31.26/$50.00 63% · today $0.00 · resets 3d · $15.83/30d`.
 /// When the terminal is narrow, the highest priority numbers are dropped first.
-pub fn line(session: &Session, usage: Usage, now: i64, columns: usize) -> String {
+pub fn line(session: &Session, usage: Usage, now: i64, columns: usize, alerts: &Alerts) -> String {
     let mut segs: Vec<(u8, String)> = Vec::new();
     if let Some(model) = session.display_model() {
         segs.push((1, format!("{BOLD}{model}{RESET}")));
@@ -40,12 +42,12 @@ pub fn line(session: &Session, usage: Usage, now: i64, columns: usize) -> String
         Usage::NotConfigured => segs.push((0, orange("LiteLLM: run `ccline login` to sign in"))),
         Usage::Failed(msg) => segs.push((0, orange(&format!("LiteLLM: {msg}")))),
         Usage::Cached(None) => segs.push((0, format!("{DIM}LiteLLM · loading…{RESET}"))),
-        Usage::Cached(Some(cache)) => usage_segments(&mut segs, session, cache, now),
+        Usage::Cached(Some(cache)) => usage_segments(&mut segs, session, cache, now, alerts),
     }
     fit(segs, columns)
 }
 
-fn usage_segments(segs: &mut Vec<(u8, String)>, session: &Session, cache: &CacheFile, now: i64) {
+fn usage_segments(segs: &mut Vec<(u8, String)>, session: &Session, cache: &CacheFile, now: i64, alerts: &Alerts) {
     if cache.error.as_ref().is_some_and(|e| e.is_signed_out()) {
         return segs.push((0, orange("LiteLLM: signed out · run `ccline login`")));
     }
@@ -54,7 +56,7 @@ fn usage_segments(segs: &mut Vec<(u8, String)>, session: &Session, cache: &Cache
         return segs.push((0, orange(&format!("LiteLLM: {}", short_error(kind)))));
     };
     let usage_page = usage_core::config::usage_page_url(&cache.proxy_url);
-    segs.push((0, link(&usage_page, &budget_segment(snap))));
+    segs.push((0, link(&usage_page, &budget_segment(snap, alerts))));
     segs.push((2, format!("today {}", money(snap.today.spend))));
     if let Some(reset) = snap.budget.reset_at.filter(|r| *r > now) {
         segs.push((3, format!("{DIM}resets {}{RESET}", duration(reset - now))));
@@ -81,11 +83,12 @@ fn context_segment(session: &Session) -> Option<String> {
     Some(format!("ctx {color}{pct:.0}%{RESET}{size}"))
 }
 
-fn budget_segment(snap: &Snapshot) -> String {
+fn budget_segment(snap: &Snapshot, alerts: &Alerts) -> String {
     let spend = money(snap.budget.spend);
     match (snap.budget.max_budget, snap.budget.used_fraction()) {
         (Some(max), Some(frac)) => {
-            let color = severity_color(frac);
+            let [r, g, b] = alerts.rgb(frac);
+            let color = &format!("\x1b[38;2;{r};{g};{b}m");
             let filled = ((frac * BAR_CELLS as f64).round() as usize).min(BAR_CELLS);
             let bar = format!("{}{}", "▰".repeat(filled), "▱".repeat(BAR_CELLS - filled));
             format!("{color}{bar}{RESET} {spend}/{} {color}{:.0}%{RESET}", money(max), frac * 100.0)

@@ -1,6 +1,8 @@
 use usage_core::cache::{CacheFile, CachedError};
 use usage_core::snapshot::{Budget, ModelUsage, Snapshot, Totals};
 
+use usage_core::alerts::Alerts;
+
 use super::*;
 
 const NOW: i64 = 1_000_000;
@@ -42,7 +44,7 @@ fn plain(s: &str) -> String {
 }
 
 fn render(s: &Session, c: &CacheFile, columns: usize) -> String {
-    plain(&line(s, Usage::Cached(Some(c)), NOW, columns))
+    plain(&line(s, Usage::Cached(Some(c)), NOW, columns, &Alerts::default()))
 }
 
 #[test]
@@ -56,11 +58,11 @@ fn full_line() {
 
 #[test]
 fn colors_by_fraction_used() {
-    let at = |spend: f64| line(&Session::default(), Usage::Cached(Some(&cache(Some(snap(spend, Some(50.0))), None))), NOW, 200);
+    let at = |spend: f64| line(&Session::default(), Usage::Cached(Some(&cache(Some(snap(spend, Some(50.0))), None))), NOW, 200, &Alerts::default());
     assert!(at(10.0).contains(&format!("{BLUE}▰")));
     assert!(at(40.0).contains(&format!("{YELLOW}▰")));
     assert!(at(46.0).contains(&format!("{RED}▰")));
-    let ctx = line(&session(Some(92.0)), Usage::NotConfigured, NOW, 200);
+    let ctx = line(&session(Some(92.0)), Usage::NotConfigured, NOW, 200, &Alerts::default());
     assert!(ctx.contains(&format!("ctx {RED}92%")), "{ctx}");
 }
 
@@ -96,8 +98,8 @@ fn stale_data_shows_age() {
 fn session_info_shows_in_every_state() {
     let s = session(Some(42.0));
     assert_eq!(render(&s, &cache(Some(snap(1.0, Some(50.0))), Some("signed_out")), 200), "Sonnet 4.6 · ctx 42% 84k/200k · LiteLLM: signed out · run `ccline login`");
-    assert_eq!(plain(&line(&s, Usage::Cached(None), NOW, 200)), "Sonnet 4.6 · ctx 42% 84k/200k · LiteLLM · loading…");
-    assert_eq!(plain(&line(&s, Usage::NotConfigured, NOW, 200)), "Sonnet 4.6 · ctx 42% 84k/200k · LiteLLM: run `ccline login` to sign in");
+    assert_eq!(plain(&line(&s, Usage::Cached(None), NOW, 200, &Alerts::default())), "Sonnet 4.6 · ctx 42% 84k/200k · LiteLLM · loading…");
+    assert_eq!(plain(&line(&s, Usage::NotConfigured, NOW, 200, &Alerts::default())), "Sonnet 4.6 · ctx 42% 84k/200k · LiteLLM: run `ccline login` to sign in");
     assert_eq!(render(&Session::default(), &cache(None, Some("keyring")), 200), "LiteLLM: secure storage unavailable");
     assert_eq!(
         render(&Session::default(), &cache(None, Some("needs_approval")), 200),
@@ -107,9 +109,16 @@ fn session_info_shows_in_every_state() {
 
 #[test]
 fn budget_links_to_usage_page() {
-    let out = line(&Session::default(), Usage::Cached(Some(&cache(Some(snap(12.4, Some(50.0))), None))), NOW, 200);
+    let out = line(&Session::default(), Usage::Cached(Some(&cache(Some(snap(12.4, Some(50.0))), None))), NOW, 200, &Alerts::default());
     assert!(out.starts_with("\x1b]8;;http://x/ui/?page=new_usage\x1b\\"), "{out:?}");
     assert_eq!(strip_escapes("a\x1b]8;;http://u\x1b\\b\x1b]8;;\x1b\\c\x1b[1md"), "abcd");
+}
+
+#[test]
+fn budget_colors_follow_the_users_alerts() {
+    let alerts = Alerts { warning_pct: 20, warning_color: "#bf5af2".into(), ..Alerts::default() };
+    let out = line(&Session::default(), Usage::Cached(Some(&cache(Some(snap(12.4, Some(50.0))), None))), NOW, 200, &alerts);
+    assert!(out.contains("\x1b[38;2;191;90;242m▰"), "{out:?}"); // 25% used ≥ 20% warning → purple
 }
 
 #[test]

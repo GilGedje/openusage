@@ -46,6 +46,7 @@ fn main() {
             commands::fit_height,
             commands::save_settings,
             commands::save_image,
+            commands::save_alerts,
             login::start_login,
             login::choose_team,
             login::cancel_login,

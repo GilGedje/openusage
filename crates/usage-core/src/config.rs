@@ -28,6 +28,9 @@ pub struct Config {
     /// Custom CA file (PEM) to trust for LiteLLM, on top of the system store. Optional.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ca_cert: Option<String>,
+    /// Budget alert levels and colors (Settings → Alerts).
+    #[serde(default)]
+    pub alerts: crate::alerts::Alerts,
 }
 
 impl Config {

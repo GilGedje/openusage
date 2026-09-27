@@ -1,5 +1,5 @@
 //! Pixels for the tray icon: the Claude mark inside a thin ring that fills with the share of budget
-//! used (blue, yellow from 75%, red from 90%). As a template image (macOS) it's black with alpha for
+//! used, in the user's alert colors (blue, then warning, then critical — see `alerts`). As a template image (macOS) it's black with alpha for
 //! the system to tint; otherwise it uses the mark's and the theme's colors.
 
 pub const SIZE: u32 = 36;
@@ -12,12 +12,13 @@ const MARK: &[u8] = include_bytes!("claude_mark.rgba");
 const MARK_SIZE: u32 = 20;
 
 /// RGBA pixels, `SIZE` × `SIZE`.
-pub fn ring_rgba(fraction: Option<f64>, template: bool) -> Vec<u8> {
+pub fn ring_rgba(fraction: Option<f64>, template: bool, alerts: &crate::alerts::Alerts) -> Vec<u8> {
     let filled = fraction.unwrap_or(0.0).clamp(0.0, 1.0);
     let (track, fill) = if template {
         ([0, 0, 0, 90], [0, 0, 0, 255])
     } else {
-        ([128, 128, 128, 150], severity(fraction.unwrap_or(0.0)))
+        let [r, g, b] = alerts.rgb(fraction.unwrap_or(0.0));
+        ([128, 128, 128, 150], [r, g, b, 255])
     };
 
     let n = SIZE as f64;
@@ -69,16 +70,6 @@ fn draw_mark(rgba: &mut [u8], template: bool) {
     }
 }
 
-/// Theme meter colors (design/theme.css, dark values).
-fn severity(fraction: f64) -> [u8; 4] {
-    if fraction >= 0.90 {
-        [255, 69, 58, 255]
-    } else if fraction >= 0.75 {
-        [255, 214, 10, 255]
-    } else {
-        [10, 132, 255, 255]
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -91,7 +82,7 @@ mod tests {
 
     #[test]
     fn ring_and_mark_are_drawn() {
-        let px = ring_rgba(Some(0.5), false);
+        let px = ring_rgba(Some(0.5), false, &crate::alerts::Alerts::default());
         assert_eq!(px.len(), (SIZE * SIZE * 4) as usize);
         let center = ((SIZE / 2 * SIZE + SIZE / 2) * 4) as usize;
         assert!(px[center + 3] > 0, "mark in the middle");

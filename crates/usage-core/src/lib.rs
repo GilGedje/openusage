@@ -2,6 +2,7 @@
 //! SSO sign-in, the LiteLLM API client, secure token storage, and the on-disk usage cache.
 
 pub mod account;
+pub mod alerts;
 pub mod api;
 pub mod cache;
 pub mod client;

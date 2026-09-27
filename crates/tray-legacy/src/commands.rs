@@ -151,3 +151,18 @@ pub fn save_settings(app: AppHandle, url: String) -> Result<PanelState, String> 
 pub fn save_image(bytes: Vec<u8>, name: String) -> Result<String, String> {
     usage_core::export::save_png(&bytes, &name).map(|p| p.to_string_lossy().into_owned()).map_err(|e| e.to_string())
 }
+
+/// Settings → Alerts: warning / critical levels (percent of budget used) and their colors.
+#[tauri::command]
+pub fn save_alerts(
+    app: AppHandle,
+    warning_pct: u8,
+    warning_color: String,
+    critical_pct: u8,
+    critical_color: String,
+) -> Result<PanelState, String> {
+    let alerts = usage_core::alerts::Alerts { warning_pct, warning_color, critical_pct, critical_color };
+    account::save_alerts(alerts).map_err(|e| e.to_string())?;
+    publish(&app);
+    Ok(PanelState::current())
+}
