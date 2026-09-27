@@ -10,6 +10,8 @@ pub enum Error {
     NotConfigured,
     /// The OS secure storage is unavailable or refused access.
     Keyring(String),
+    /// macOS needs the user to allow Keychain access, and this process may not ask.
+    NeedsApproval,
     /// The proxy answered with an error status.
     Http { status: u16, message: String },
     /// The proxy could not be reached.
@@ -27,6 +29,7 @@ impl Error {
             Error::SignedOut => "signed_out",
             Error::NotConfigured => "not_configured",
             Error::Keyring(_) => "keyring",
+            Error::NeedsApproval => "needs_approval",
             Error::Http { .. } => "http",
             Error::Network(_) => "network",
             Error::Parse(_) => "parse",
@@ -42,6 +45,10 @@ impl fmt::Display for Error {
             Error::SignedOut => write!(f, "Signed out of LiteLLM. Run `ccline login` to sign in again."),
             Error::NotConfigured => write!(f, "No LiteLLM proxy configured. Run `ccline login --url <proxy url>`."),
             Error::Keyring(m) => write!(f, "Secure storage unavailable: {m}"),
+            Error::NeedsApproval => write!(
+                f,
+                "Keychain access needs your approval. Run `ccline status` in a terminal and choose Always Allow."
+            ),
             Error::Http { status, message } => write!(f, "LiteLLM returned {status}: {message}"),
             Error::Network(m) => write!(f, "Can't reach LiteLLM: {m}"),
             Error::Parse(m) => write!(f, "Unexpected response from LiteLLM: {m}"),

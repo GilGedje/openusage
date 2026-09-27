@@ -50,6 +50,11 @@ pub fn cache_dir() -> PathBuf {
     dirs::cache_dir().unwrap_or_else(std::env::temp_dir).join(APP_DIR)
 }
 
+/// LiteLLM's own Usage page for the signed-in user (its dashboard sends them through SSO if needed).
+pub fn usage_page_url(proxy_url: &str) -> String {
+    format!("{proxy_url}/ui/?page=new_usage")
+}
+
 /// Turns what users paste (or what Claude Code's `ANTHROPIC_BASE_URL` holds) into the proxy root:
 /// trims whitespace and trailing slashes, and drops a trailing `/v1` or `/anthropic` route suffix.
 /// Any other path is kept, since a proxy can be served under a sub-path.

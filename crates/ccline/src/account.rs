@@ -5,21 +5,15 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use usage_core::client::Client;
-use usage_core::config::{Config, normalize_url};
-use usage_core::secret;
 use usage_core::sso::{self, Poll, Team};
-use usage_core::{Error, Result, cache};
+use usage_core::{Error, Result, account, refresh};
 
-use crate::{refresh, render};
+use crate::render;
 
 const POLL_EVERY: Duration = Duration::from_secs(2);
 
 pub fn login(url_flag: Option<String>) -> Result<()> {
-    let raw = url_flag
-        .or_else(|| std::env::var("ANTHROPIC_BASE_URL").ok().filter(|s| !s.trim().is_empty()))
-        .or(Config::load()?.proxy_url)
-        .ok_or(Error::NotConfigured)?;
-    let proxy_url = normalize_url(&raw)?;
+    let proxy_url = account::resolve_proxy_url(url_flag.as_deref())?;
     let client = Client::new(&proxy_url, None);
 
     let start = sso::start(&client)?;
@@ -45,15 +39,7 @@ pub fn login(url_flag: Option<String>) -> Result<()> {
         }
     };
 
-    secret::save(&proxy_url, &token)?;
-    Config {
-        proxy_url: Some(proxy_url),
-        user_id: Some(user_id.clone()),
-        team_id,
-        signed_in_at: Some(usage_core::now()),
-    }
-    .save()?;
-    cache::clear()?;
+    account::save_sign_in(&proxy_url, &token, &user_id, team_id)?;
     println!("\nSigned in as {user_id}.\n");
     status()
 }
@@ -77,13 +63,7 @@ fn pick_team(teams: &[Team]) -> Result<String> {
 }
 
 pub fn logout() -> Result<()> {
-    let config = Config::load()?;
-    if let Some(url) = &config.proxy_url {
-        secret::delete(url)?;
-    }
-    // Keep the proxy URL so `ccline login` can sign in again without `--url`.
-    Config { proxy_url: config.proxy_url, ..Config::default() }.save()?;
-    cache::clear()?;
+    account::sign_out()?;
     println!("Signed out.");
     Ok(())
 }

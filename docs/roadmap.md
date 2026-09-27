@@ -12,6 +12,10 @@ Everything left to do, with how to build it. Tick items off here as they land.
 - CI workflow for Windows / Ubuntu / macOS (`.github/workflows/ci.yml`, not yet pushed)
 - Verified: macOS end to end; Ubuntu compiles and passes tests (Docker)
 
+## Next: tray app (priority)
+
+Building now — see "Tray app" below. The ccline rollout items follow it.
+
 ## Rolling out ccline (install script, air-gapped network)
 
 Users install with one script. No step may reach the internet: everything comes from a bundle you
@@ -90,7 +94,7 @@ Settings edits live in the binary (not in shell scripts) so they behave the same
   storage unavailable`. Option: fall back to the Linux kernel keyring (keyutils) — secure, but the
   token is lost at reboot/logout. Needs a decision on whether headless users matter.
 
-## Tray app (after ccline rollout)
+## Tray app
 
 - Tauri v2 app reusing `usage-core`; UI styled with `design/theme.css`.
 - Tray icon with budget %; popup with budget bar, today, per-model spend, daily chart, sign-in and

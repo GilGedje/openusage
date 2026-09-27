@@ -5,15 +5,17 @@
 //! touches the network or secure storage while rendering (Claude Code cancels slow status lines).
 
 mod account;
-mod refresh;
 mod render;
 mod session;
+mod spawn;
 
 use std::io::{IsTerminal, Read};
 use std::process::ExitCode;
 
 use usage_core::config::Config;
-use usage_core::{cache, log};
+use usage_core::{cache, log, refresh};
+
+const REFRESH_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(45);
 
 const HELP: &str = "\
 ccline — Claude Code status line for your LiteLLM budget and usage
@@ -36,10 +38,7 @@ fn main() -> ExitCode {
         Some("login") => account::login(url_flag(&args[1..])),
         Some("logout") => account::logout(),
         Some("status") => account::status(),
-        Some("refresh") => {
-            refresh::run();
-            Ok(())
-        }
+        Some("refresh") => background_refresh(),
         Some("-h" | "--help" | "help") => {
             print!("{HELP}");
             Ok(())
@@ -57,6 +56,18 @@ fn main() -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+/// Background refresh started by the status line: never prompts, and never outlives
+/// `REFRESH_TIMEOUT` (it's under the refresh lock's stale age, so a stuck process can't pile up).
+fn background_refresh() -> usage_core::Result<()> {
+    usage_core::secret::disallow_prompts();
+    std::thread::spawn(|| {
+        std::thread::sleep(REFRESH_TIMEOUT);
+        log::error("refresh", "timed out; giving up");
+        std::process::exit(1);
+    });
+    refresh::refresh_if_free().map(|_| ())
 }
 
 fn url_flag(args: &[String]) -> Option<String> {
@@ -89,8 +100,8 @@ fn status_line() {
         return;
     };
     let cached = cache::read().filter(|c| c.proxy_url == proxy_url);
-    if cached.as_ref().is_none_or(|c| now - c.last_attempt >= refresh::REFRESH_SECS) {
-        refresh::spawn_detached();
+    if refresh::is_due(cached.as_ref(), now) {
+        spawn::refresh_detached();
     }
     println!("{}", render::line(&session, render::Usage::Cached(cached.as_ref()), now, columns));
 }

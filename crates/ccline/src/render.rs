@@ -53,7 +53,8 @@ fn usage_segments(segs: &mut Vec<(u8, String)>, session: &Session, cache: &Cache
         let kind = cache.error.as_ref().map(|e| e.kind.as_str()).unwrap_or("");
         return segs.push((0, orange(&format!("LiteLLM: {}", short_error(kind)))));
     };
-    segs.push((0, budget_segment(snap)));
+    let usage_page = usage_core::config::usage_page_url(&cache.proxy_url);
+    segs.push((0, link(&usage_page, &budget_segment(snap))));
     segs.push((2, format!("today {}", money(snap.today.spend))));
     if let Some(reset) = snap.budget.reset_at.filter(|r| *r > now) {
         segs.push((3, format!("{DIM}resets {}{RESET}", duration(reset - now))));
@@ -111,6 +112,7 @@ fn short_error(kind: &str) -> &'static str {
     match kind {
         "network" => "can't reach proxy",
         "keyring" => "secure storage unavailable",
+        "needs_approval" => "run `ccline status` to allow Keychain access",
         "http" => "proxy error",
         "parse" => "unexpected response",
         "not_configured" => "run `ccline login`",
@@ -132,18 +134,43 @@ fn fit(mut segs: Vec<(u8, String)>, columns: usize) -> String {
     }
 }
 
+/// Clickable text (OSC 8 hyperlink); terminals without link support show the plain text.
+fn link(url: &str, text: &str) -> String {
+    format!("\x1b]8;;{url}\x1b\\{text}\x1b]8;;\x1b\\")
+}
+
 fn visible_len(s: &str) -> usize {
-    let mut len = 0;
-    let mut in_escape = false;
-    for c in s.chars() {
-        match (in_escape, c) {
-            (false, '\x1b') => in_escape = true,
-            (true, 'm') => in_escape = false,
-            (true, _) => {}
-            (false, _) => len += 1,
+    strip_escapes(s).chars().count()
+}
+
+/// Removes color codes (`ESC [ … m`) and links (`ESC ] … ESC \`).
+fn strip_escapes(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut chars = s.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c != '\x1b' {
+            out.push(c);
+            continue;
+        }
+        match chars.next() {
+            Some('[') => {
+                for c in chars.by_ref() {
+                    if c.is_ascii_alphabetic() {
+                        break;
+                    }
+                }
+            }
+            Some(']') => {
+                while let Some(c) = chars.next() {
+                    if c == '\x07' || (c == '\x1b' && chars.next_if_eq(&'\\').is_some()) {
+                        break;
+                    }
+                }
+            }
+            _ => {}
         }
     }
-    len
+    out
 }
 
 pub fn money(v: f64) -> String {

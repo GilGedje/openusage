@@ -5,7 +5,12 @@
 //! model lists, so the token is stored as UTF-8 bytes split across numbered entries:
 //! `<proxy url>` holds `<part count>\n<first part>`, then `<proxy url>#2`, `<proxy url>#3`, …
 
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use crate::{Error, Result};
+
+/// Set by `disallow_prompts`.
+static PROMPTS_OFF: AtomicBool = AtomicBool::new(false);
 
 const SERVICE: &str = "litellm-usage";
 /// Comfortably under Windows' 2,560-byte credential limit (tokens are ASCII).
@@ -19,7 +24,34 @@ fn entry(proxy_url: &str, part: usize) -> Result<keyring::Entry> {
 }
 
 fn keyring_error(e: keyring::Error) -> Error {
-    Error::Keyring(e.to_string())
+    let message = e.to_string();
+    // With prompts off, macOS reports "needs the user's OK" as errSecInteractionNotAllowed
+    // (-25308) or errSecAuthFailed (-25293, "user name or passphrase … not correct").
+    let needs_ok = ["-25308", "-25293", "User interaction is not allowed", "passphrase you entered is not correct"]
+        .iter()
+        .any(|m| message.contains(m));
+    if PROMPTS_OFF.load(Ordering::Relaxed) && needs_ok {
+        return Error::NeedsApproval;
+    }
+    Error::Keyring(message)
+}
+
+/// Background processes must never open a Keychain dialog: nobody sees it, and the process would
+/// wait on it forever. With prompts off, access that needs approval fails with `NeedsApproval`
+/// instead, and the user approves once by running `ccline status`. No-op outside macOS.
+pub fn disallow_prompts() {
+    PROMPTS_OFF.store(true, Ordering::Relaxed);
+    #[cfg(target_os = "macos")]
+    // SAFETY: plain C call with a boolean argument; it only flips a per-process flag.
+    unsafe {
+        SecKeychainSetUserInteractionAllowed(0);
+    }
+}
+
+#[cfg(target_os = "macos")]
+#[link(name = "Security", kind = "framework")]
+unsafe extern "C" {
+    fn SecKeychainSetUserInteractionAllowed(state: u8) -> i32;
 }
 
 pub fn save(proxy_url: &str, token: &str) -> Result<()> {

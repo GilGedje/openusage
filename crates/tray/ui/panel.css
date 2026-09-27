@@ -1,0 +1,397 @@
+/* Panel layout on top of theme.css tokens, mirroring OpenUsage's popover. */
+
+html,
+body {
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+.panel {
+  padding: 16px 12px 0;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.notice {
+  color: var(--notice);
+}
+
+/* Section titles: "Cost", "LiteLLM gilgedje" */
+.section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0 4px;
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.section-title .subtitle {
+  font-size: var(--font-supporting);
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+}
+
+.section-header-row .section-title {
+  margin-bottom: 0;
+}
+
+.section-header-row + .card,
+.section-header-row + .card.account-card {
+  margin-top: 8px;
+}
+
+/* Cost card */
+.cost-card {
+  padding: 10px 12px 12px;
+}
+
+.segmented {
+  display: flex;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--segment-track);
+}
+
+.segment {
+  flex: 1;
+  padding: 4px 0;
+  border-radius: 6px;
+  font-size: var(--font-supporting);
+  color: var(--text-secondary);
+}
+
+.segment.selected {
+  background: var(--segment-selected);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.cost-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.donut {
+  position: relative;
+  flex: none;
+  width: 96px;
+  height: 96px;
+}
+
+.donut svg {
+  width: 96px;
+  height: 96px;
+}
+
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-amount {
+  font-size: var(--font-supporting);
+  font-weight: 700;
+}
+
+.donut-unit {
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+}
+
+.legend {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--font-supporting);
+}
+
+.dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.legend-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legend-value {
+  flex: none;
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+}
+
+/* 30-day spend chart (30 Days view) */
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 32px;
+  margin-top: 12px;
+}
+
+.chart .bar {
+  flex: 1;
+  min-height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--series-1);
+  opacity: 0.8;
+}
+
+.chart .bar.empty {
+  background: var(--meter-track);
+  opacity: 1;
+}
+
+.chart .bar.today {
+  opacity: 1;
+}
+
+.chart-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: var(--font-caption);
+  color: var(--text-tertiary);
+}
+
+/* Account card: metric rows like OpenUsage's Session / Weekly */
+.account-card {
+  padding: 6px 0;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-inner-spacing);
+  padding: var(--bar-row-padding-y) var(--row-padding-x);
+}
+
+.metric-top,
+.metric-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.metric-label {
+  font-size: var(--font-label);
+  font-weight: 600;
+}
+
+.metric-value {
+  font-size: var(--font-supporting);
+  font-weight: 600;
+}
+
+.metric-side {
+  font-size: var(--font-supporting);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.metric-side.notice {
+  color: var(--notice);
+}
+
+.meter-tick {
+  top: -3px;
+  height: calc(var(--meter-height) + 6px);
+}
+
+.text-rows {
+  padding: 4px var(--row-padding-x) 6px;
+}
+
+.text-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: var(--text-row-padding-y) 0 2px;
+  font-size: var(--font-supporting);
+}
+
+.text-row span:first-child {
+  font-weight: 600;
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 10px 2px 12px;
+  border-top: 0.5px solid var(--separator);
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+}
+
+.footer .actions {
+  display: flex;
+  gap: 0;
+}
+
+/* Buttons and inputs */
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: default;
+}
+
+.link-button {
+  padding: 3px 5px;
+  border-radius: var(--highlight-radius);
+  color: var(--text-secondary);
+  font-size: var(--font-caption);
+}
+
+.link-button:hover {
+  background: var(--card-fill);
+  color: var(--text);
+}
+
+.icon-button {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--highlight-radius);
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 24px;
+  text-align: center;
+}
+
+.icon-button:hover {
+  background: var(--card-fill);
+  color: var(--text);
+}
+
+.icon-button.spinning {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.primary-button {
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: var(--meter-normal);
+  color: #fff;
+  font-weight: 600;
+  font-size: var(--font-label);
+}
+
+.primary-button:disabled {
+  opacity: 0.5;
+}
+
+.text-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 0.5px solid var(--separator);
+  background: var(--tray);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--font-supporting);
+}
+
+.text-input:focus {
+  outline: 2px solid var(--meter-normal);
+  outline-offset: -1px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px var(--row-padding-x);
+}
+
+.muted {
+  color: var(--text-secondary);
+  font-size: var(--font-supporting);
+  line-height: 1.4;
+}
+
+.code {
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Ubuntu Mono", monospace;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 6px 0;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.team-list button {
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: var(--card-fill);
+}
+
+.team-list button:hover {
+  outline: 1px solid var(--meter-normal);
+}
+
+.banner {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-radius: var(--card-radius);
+  background: linear-gradient(var(--card-fill), var(--card-fill)), var(--tray);
+  font-size: var(--font-supporting);
+}

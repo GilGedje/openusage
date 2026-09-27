@@ -33,6 +33,16 @@ pub struct ModelUsage {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DayUsage {
+    /// `YYYY-MM-DD` (LiteLLM's day bucket).
+    pub date: String,
+    pub totals: Totals,
+    /// That day's usage by model, most spend first.
+    #[serde(default)]
+    pub models: Vec<ModelUsage>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Budget {
     /// Spend in the current budget window.
     pub spend: f64,
@@ -56,9 +66,14 @@ pub struct Snapshot {
     pub user_id: String,
     pub budget: Budget,
     pub today: Totals,
+    #[serde(default)]
+    pub yesterday: Totals,
     pub last_30d: Totals,
     /// Last 30 days by model, most spend first.
     pub models: Vec<ModelUsage>,
+    /// Days with usage in the last 30 days, oldest first.
+    #[serde(default)]
+    pub days: Vec<DayUsage>,
 }
 
 pub fn fetch(client: &Client) -> Result<Snapshot> {
@@ -75,28 +90,30 @@ pub fn fetch(client: &Client) -> Result<Snapshot> {
 /// buckets by UTC day, and `include_current_utc_day` may add a bucket dated tomorrow locally.
 pub fn build(user: &UserInfo, activity: &DailyActivity, today: NaiveDate, now: i64) -> Snapshot {
     let today_str = today.format("%Y-%m-%d").to_string();
+    let yesterday_str = (today - Duration::days(1)).format("%Y-%m-%d").to_string();
     let mut today_totals = Totals::default();
+    let mut yesterday_totals = Totals::default();
     let mut total = Totals::default();
     let mut models: Vec<ModelUsage> = Vec::new();
+    let mut days: Vec<DayUsage> = Vec::new();
 
     for day in &activity.results {
         total.add(&day.metrics);
         if day.date >= today_str {
             today_totals.add(&day.metrics);
+        } else if day.date == yesterday_str {
+            yesterday_totals.add(&day.metrics);
         }
+        let mut day_models = Vec::new();
         for (name, entry) in &day.breakdown.model_groups {
-            match models.iter_mut().find(|m| &m.name == name) {
-                Some(m) => m.totals.add(&entry.metrics),
-                None => {
-                    let mut totals = Totals::default();
-                    totals.add(&entry.metrics);
-                    models.push(ModelUsage { name: name.clone(), totals });
-                }
-            }
+            add_model(&mut models, name, &entry.metrics);
+            add_model(&mut day_models, name, &entry.metrics);
         }
+        let mut totals = Totals::default();
+        totals.add(&day.metrics);
+        days.push(DayUsage { date: day.date.clone(), totals, models: sorted(day_models) });
     }
-    models.retain(|m| m.totals.requests > 0 || m.totals.spend > 0.0);
-    models.sort_by(|a, b| b.totals.spend.total_cmp(&a.totals.spend).then_with(|| a.name.cmp(&b.name)));
+    days.sort_by(|a, b| a.date.cmp(&b.date));
 
     Snapshot {
         fetched_at: now,
@@ -112,9 +129,29 @@ pub fn build(user: &UserInfo, activity: &DailyActivity, today: NaiveDate, now: i
                 .map(|d| d.timestamp()),
         },
         today: today_totals,
+        yesterday: yesterday_totals,
         last_30d: total,
-        models,
+        models: sorted(models),
+        days,
     }
+}
+
+fn add_model(models: &mut Vec<ModelUsage>, name: &str, metrics: &Metrics) {
+    match models.iter_mut().find(|m| m.name == name) {
+        Some(m) => m.totals.add(metrics),
+        None => {
+            let mut totals = Totals::default();
+            totals.add(metrics);
+            models.push(ModelUsage { name: name.to_string(), totals });
+        }
+    }
+}
+
+/// Drops models with no activity and orders by spend, most first.
+fn sorted(mut models: Vec<ModelUsage>) -> Vec<ModelUsage> {
+    models.retain(|m| m.totals.requests > 0 || m.totals.spend > 0.0);
+    models.sort_by(|a, b| b.totals.spend.total_cmp(&a.totals.spend).then_with(|| a.name.cmp(&b.name)));
+    models
 }
 
 #[cfg(test)]
@@ -128,18 +165,26 @@ mod tests {
     fn builds_snapshot_from_fixtures() {
         let user: UserInfo = serde_json::from_str(USER).unwrap();
         let activity: DailyActivity = serde_json::from_str(DAILY).unwrap();
-        let today = NaiveDate::from_ymd_opt(2026, 7, 2).unwrap();
+        let today = NaiveDate::from_ymd_opt(2026, 7, 3).unwrap();
         let snap = build(&user, &activity, today, 1_000);
 
         assert_eq!(snap.user_id, "test-user");
         assert_eq!(snap.budget.max_budget, Some(50.0));
         assert_eq!(snap.budget.reset_at, Some(1_790_812_800)); // 2026-10-01T00:00:00Z
-        assert!((snap.today.spend - 0.00256385).abs() < 1e-9);
-        assert_eq!(snap.today.requests, 7);
+        assert_eq!(snap.today, Totals::default());
+        assert!((snap.yesterday.spend - 0.00256385).abs() < 1e-9);
+        assert_eq!(snap.yesterday.requests, 7);
         assert_eq!(snap.last_30d.requests, 34);
 
         let names: Vec<&str> = snap.models.iter().map(|m| m.name.as_str()).collect();
         assert_eq!(names, ["gemini-2.5-pro", "claude-sonnet-4-6", "gemini-2.5-flash", "haiku", "sonnet"]);
+
+        let dates: Vec<&str> = snap.days.iter().map(|d| d.date.as_str()).collect();
+        assert_eq!(dates, ["2026-06-27", "2026-07-02"]);
+        assert_eq!(snap.days[1].totals.requests, 7);
+        let day_models: Vec<&str> = snap.days[1].models.iter().map(|m| m.name.as_str()).collect();
+        assert_eq!(day_models, ["gemini-2.5-pro", "claude-sonnet-4-6", "gemini-2.5-flash", "haiku", "sonnet"]);
+        assert!(snap.days[0].models.is_empty());
     }
 
     #[test]

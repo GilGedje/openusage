@@ -1,7 +1,7 @@
 //! LiteLLM's device-style SSO login (`/sso/cli/*`): start, send the user to the browser, poll.
 //! See docs/litellm-api.md.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::client::Client;
 use crate::{Error, Result};
@@ -25,7 +25,7 @@ impl Start {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Team {
     pub team_id: String,
     pub team_alias: Option<String>,

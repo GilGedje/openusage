@@ -11,8 +11,10 @@ fn snap(spend: f64, max: Option<f64>) -> Snapshot {
         user_id: "u".into(),
         budget: Budget { spend, max_budget: max, duration: Some("30d".into()), reset_at: Some(NOW + 4 * 86_400) },
         today: Totals { spend: 1.2, tokens: 12_300, requests: 5 },
+        yesterday: Totals::default(),
         last_30d: Totals { spend: 12.4, tokens: 1_200_000, requests: 80 },
         models: vec![ModelUsage { name: "sonnet".into(), totals: Totals { spend: 8.1, tokens: 900_000, requests: 50 } }],
+        days: vec![],
     }
 }
 
@@ -36,17 +38,7 @@ fn session(pct: Option<f64>) -> Session {
 }
 
 fn plain(s: &str) -> String {
-    let mut out = String::new();
-    let mut esc = false;
-    for c in s.chars() {
-        match (esc, c) {
-            (false, '\x1b') => esc = true,
-            (true, 'm') => esc = false,
-            (true, _) => {}
-            (false, c) => out.push(c),
-        }
-    }
-    out
+    strip_escapes(s)
 }
 
 fn render(s: &Session, c: &CacheFile, columns: usize) -> String {
@@ -65,9 +57,9 @@ fn full_line() {
 #[test]
 fn colors_by_fraction_used() {
     let at = |spend: f64| line(&Session::default(), Usage::Cached(Some(&cache(Some(snap(spend, Some(50.0))), None))), NOW, 200);
-    assert!(at(10.0).starts_with(BLUE));
-    assert!(at(40.0).starts_with(YELLOW));
-    assert!(at(46.0).starts_with(RED));
+    assert!(at(10.0).contains(&format!("{BLUE}▰")));
+    assert!(at(40.0).contains(&format!("{YELLOW}▰")));
+    assert!(at(46.0).contains(&format!("{RED}▰")));
     let ctx = line(&session(Some(92.0)), Usage::NotConfigured, NOW, 200);
     assert!(ctx.contains(&format!("ctx {RED}92%")), "{ctx}");
 }
@@ -107,6 +99,17 @@ fn session_info_shows_in_every_state() {
     assert_eq!(plain(&line(&s, Usage::Cached(None), NOW, 200)), "Sonnet 4.6 · ctx 42% 84k/200k · LiteLLM · loading…");
     assert_eq!(plain(&line(&s, Usage::NotConfigured, NOW, 200)), "Sonnet 4.6 · ctx 42% 84k/200k · LiteLLM: run `ccline login` to sign in");
     assert_eq!(render(&Session::default(), &cache(None, Some("keyring")), 200), "LiteLLM: secure storage unavailable");
+    assert_eq!(
+        render(&Session::default(), &cache(None, Some("needs_approval")), 200),
+        "LiteLLM: run `ccline status` to allow Keychain access"
+    );
+}
+
+#[test]
+fn budget_links_to_usage_page() {
+    let out = line(&Session::default(), Usage::Cached(Some(&cache(Some(snap(12.4, Some(50.0))), None))), NOW, 200);
+    assert!(out.starts_with("\x1b]8;;http://x/ui/?page=new_usage\x1b\\"), "{out:?}");
+    assert_eq!(strip_escapes("a\x1b]8;;http://u\x1b\\b\x1b]8;;\x1b\\c\x1b[1md"), "abcd");
 }
 
 #[test]

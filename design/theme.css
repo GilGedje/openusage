@@ -15,7 +15,7 @@
 
   /* Surfaces */
   --tray: #ffffff;                          /* page behind the cards */
-  --card-fill: rgba(0, 0, 0, 0.025);        /* lifts a card off the tray (~#F9F9F9 on white) */
+  --card-fill: rgba(0, 0, 0, 0.05);         /* lifts a card off the tray (~#F2F2F2 on white) */
   --separator: rgba(0, 0, 0, 0.1);
   --meter-track: rgba(0, 0, 0, 0.08);
 
@@ -29,6 +29,19 @@
   --meter-warning: #ffcc00;
   --meter-critical: #ff3b30;
   --pace-tick: rgba(0, 0, 0, 0.55);
+
+  /* Categorical series (donut / per-model colors), in order; last one is "Other" */
+  --series-1: #1d1d1f;
+  --series-2: #e0735a;
+  --series-3: #10a37f;
+  --series-4: #007aff;
+  --series-5: #af52de;
+  --series-6: #8e8e93;
+  --series-other: rgba(0, 0, 0, 0.18);
+
+  /* Segmented control */
+  --segment-track: rgba(0, 0, 0, 0.07);
+  --segment-selected: #ffffff;
 
   /* Inline tints */
   --notice: #ff9500;                        /* warnings, errors, limits */
@@ -91,6 +104,15 @@
     --pace-tick: rgba(255, 255, 255, 0.55);
     --notice: #ff9f0a;
     --positive: #30d158;
+    --series-1: #f5f5f7;
+    --series-2: #e0735a;
+    --series-3: #10a37f;
+    --series-4: #0a84ff;
+    --series-5: #bf5af2;
+    --series-6: #8e8e93;
+    --series-other: rgba(255, 255, 255, 0.22);
+    --segment-track: rgba(255, 255, 255, 0.08);
+    --segment-selected: #1c1c1e;
   }
 }
 
@@ -113,6 +135,15 @@
   --pace-tick: rgba(255, 255, 255, 0.55);
   --notice: #ff9f0a;
   --positive: #30d158;
+  --series-1: #f5f5f7;
+  --series-2: #e0735a;
+  --series-3: #10a37f;
+  --series-4: #0a84ff;
+  --series-5: #bf5af2;
+  --series-6: #8e8e93;
+  --series-other: rgba(255, 255, 255, 0.22);
+  --segment-track: rgba(255, 255, 255, 0.08);
+  --segment-selected: #1c1c1e;
 }
 
 /* Base */
