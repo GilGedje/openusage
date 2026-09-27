@@ -136,3 +136,18 @@ pub fn configure_from_args(args: &[String]) -> i32 {
         }
     }
 }
+
+/// The panel's settings view: LiteLLM address, status page, CA certificate.
+#[tauri::command]
+pub fn save_settings(app: AppHandle, url: String, status_url: String, ca_cert: String) -> Result<PanelState, String> {
+    account::configure(account::Setup {
+        url: Some(&url),
+        status_url: Some(&status_url),
+        ca_cert: Some(&ca_cert),
+        copy_ca: false,
+    })
+    .map_err(|e| e.to_string())?;
+    publish(&app);
+    refresh_in_background(app);
+    Ok(PanelState::current())
+}

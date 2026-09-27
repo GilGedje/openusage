@@ -63,10 +63,19 @@ If a refresh fails, the old numbers stay on screen with a warning and their age
   folder, both under `litellm-usage/` (on macOS: `~/Library/Application Support/litellm-usage/` and
   `~/Library/Caches/litellm-usage/`).
 
+## Internal certificates
+
+`ccline` trusts the machine's certificates plus an optional CA file: `ccline setup --ca-cert <file>`
+(used in place), `--ca-cert-copy <file>` (copied next to the settings), or the
+`LITELLM_USAGE_CA_CERT` environment variable. The installers set this from `CA_CERT` in
+`install.conf`.
+
 ## Troubleshooting
 
 - **`secure storage unavailable`** on Ubuntu — the Secret Service isn't running (common over SSH or on
   servers without a desktop). Sign in from a desktop session.
 - **macOS asks for Keychain access** after installing a new build — choose **Always Allow**.
+- **`certificate not trusted`** — LiteLLM uses a certificate from a CA this machine doesn't know. Set
+  the CA file (above) or ask IT to install the CA.
 - **`localhost` proxy** — ccline connects to `127.0.0.1` for `localhost`, like browsers do, so it works
   even when the hosts file has no `localhost` entry.

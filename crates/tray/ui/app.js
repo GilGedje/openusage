@@ -10,6 +10,10 @@ let state = null;
 // null | { phase: "waiting", code, link } | { phase: "team", teams }
 let login = null;
 let signInError = null;
+let settingsOpen = false;
+let settingsError = null;
+// What was typed in the settings form, kept when Save fails.
+let settingsDraft = null;
 // What the user has typed in the sign-in URL field, so background updates don't wipe it.
 let draftUrl = null;
 let period = loadPeriod();
@@ -25,8 +29,14 @@ function loadPeriod() {
 
 function render() {
   if (!state) return;
-  // Don't redraw the sign-in form under the user's cursor.
-  if (document.activeElement && document.activeElement.id === "proxy-url" && !state.signed_in && !login) return;
+  // Don't redraw a form under the user's cursor.
+  const typing = document.activeElement && document.activeElement.classList.contains("text-input");
+  if (typing && (settingsOpen || (!state.signed_in && !login))) return;
+  if (settingsOpen) {
+    app.innerHTML = Views.settings(state, settingsError, settingsDraft);
+    requestAnimationFrame(() => invoke("fit_height", { height: document.body.scrollHeight }));
+    return;
+  }
   if (login && login.phase === "waiting") app.innerHTML = Views.waiting(login);
   else if (login && login.phase === "team") app.innerHTML = Views.pickTeam(login.teams);
   else if (!state.signed_in) app.innerHTML = Views.signIn(state, signInError, draftUrl);
@@ -61,6 +71,31 @@ async function act(action, el) {
         localStorage.setItem("period", period);
       } catch {}
       break;
+    case "settings":
+      settingsOpen = true;
+      settingsError = null;
+      settingsDraft = null;
+      break;
+    case "close-settings":
+      settingsOpen = false;
+      break;
+    case "save-settings": {
+      el.disabled = true;
+      const draft = {
+        url: document.getElementById("set-url").value.trim(),
+        statusUrl: document.getElementById("set-status").value.trim(),
+        caCert: document.getElementById("set-ca").value.trim(),
+      };
+      try {
+        state = await invoke("save_settings", draft);
+        settingsOpen = false;
+        settingsDraft = null;
+      } catch (e) {
+        settingsError = String(e);
+        settingsDraft = draft;
+      }
+      break;
+    }
     case "open-usage":
       if (state && state.usage_url) await invoke("open_url", { url: state.usage_url });
       return;
@@ -103,6 +138,13 @@ app.addEventListener("keydown", (e) => {
 
 listen("state", (e) => {
   state = e.payload;
+  render();
+});
+
+listen("show-settings", () => {
+  settingsOpen = true;
+  settingsError = null;
+  settingsDraft = null;
   render();
 });
 

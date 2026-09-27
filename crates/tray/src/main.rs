@@ -8,12 +8,11 @@ mod gauge;
 mod login;
 mod panel;
 mod state;
+mod tray_icon;
 
 use std::time::Duration;
 
 use tauri::Manager;
-use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
 use crate::state::AppState;
 
@@ -45,6 +44,7 @@ fn main() {
             commands::open_url,
             commands::quit,
             commands::fit_height,
+            commands::save_settings,
             login::start_login,
             login::choose_team,
             login::cancel_login,
@@ -53,36 +53,11 @@ fn main() {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
-            let open = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
-            let refresh = MenuItem::with_id(app, "refresh", "Refresh", true, None::<&str>)?;
-            let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open, &refresh, &PredefinedMenuItem::separator(app)?, &quit])?;
-
-            TrayIconBuilder::with_id(state::TRAY_ID)
-                .icon(gauge::icon(None))
-                .icon_as_template(cfg!(target_os = "macos"))
-                .tooltip("LiteLLM Usage")
-                .menu(&menu)
-                .show_menu_on_left_click(false)
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "open" => panel::show(app),
-                    "refresh" => commands::refresh_in_background(app.clone()),
-                    "quit" => app.exit(0),
-                    _ => {}
-                })
-                .on_tray_icon_event(|tray, event| {
-                    tauri_plugin_positioner::on_tray_event(tray.app_handle(), &event);
-                    if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } =
-                        event
-                    {
-                        panel::toggle(tray.app_handle());
-                    }
-                })
-                .build(app)?;
+            tray_icon::install(app)?;
 
             // For testing: open the panel right away.
             if std::env::var_os("LITELLM_USAGE_OPEN_PANEL").is_some() {
-                panel::show(app.handle());
+                panel::show(app.handle(), None);
             }
 
             let handle = app.handle().clone();

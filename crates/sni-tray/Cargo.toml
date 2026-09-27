@@ -1,0 +1,10 @@
+[package]
+name = "sni-tray"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+# Linux tray icon over the StatusNotifierItem protocol, shared by both tray builds: left click opens
+# the panel, right click shows the menu (AppIndicator, which Tauri uses, can only show a menu).
+[target.'cfg(target_os = "linux")'.dependencies]
+ksni = { version = "0.3", features = ["blocking"] }

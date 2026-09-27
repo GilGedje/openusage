@@ -35,6 +35,8 @@ remain. It is **not** OpenUsage and must not use its name or logo.
 | Look | **Match OpenUsage's panel**: Cost card (Today / Yesterday / 30 Days switch + donut + legend), then the account card, Dashboard / Status links, footer with Refresh Now |
 | Links | **Dashboard** → LiteLLM's Usage page; **Status** → the org's status page (like status.claude.com) |
 | Language | **Rust** (shared core with the Tauri tray app) |
+| Certificates | Trust the org CA (system store + custom CA path); **never** disable verification |
+| Tray clicks | Left click opens the panel; right click = menu (Open, Refresh, Change LiteLLM URL…, Quit) |
 | Versions | Never bump or tag a version without explicit owner approval |
 
 ## 3. Layout
@@ -44,6 +46,7 @@ crates/usage-core/   Shared library: LiteLLM client, SSO, secure storage, cache,
 crates/ccline/       Status line binary (+ login/logout/status/setup commands)
 crates/tray/         Tauri 2 tray app for 22.04+ (Rust side in src/, panel UI in ui/ — shared)
 crates/tray-legacy/  Tauri 1 tray for Ubuntu 20.04 (WebKitGTK 4.0); own workspace, same ui/ and core
+crates/sni-tray/     Linux tray icon over StatusNotifierItem (left click → panel), used by both trays
 design/theme.css     Colors, light/dark, sizes — copied into the tray UI at build time
 installer/linux/     tray/ and ccline/ installers, fetch-deps.sh (offline package set), make-bundle.sh
 tools/ubuntu-test/   Docker build + Ubuntu desktop test harness
@@ -154,8 +157,12 @@ libssl-dev build-essential`.
 - **Docker builds OOM** compiling GTK with LTO when two builds run at once — use `CARGO_BUILD_JOBS=2`.
 - **Ubuntu 20.04's standard desktop already ships WebKitGTK 4.0** (yelp, GNOME online accounts);
   24.04 dropped 4.0; 26.04 has 4.1 (`libgtk-3-0t64` provides `libgtk-3-0`).
-- **Linux trays send no click events**: the icon opens a menu (Open / Refresh / Quit) and the panel
-  opens at the top right.
+- **AppIndicator (Tauri's Linux tray) sends no click events**, so both trays use `crates/sni-tray`
+  (StatusNotifierItem via `ksni`): left click → `activate(x, y)` → panel next to the click; right
+  click → menu. If the desktop has no StatusNotifierItem host, they fall back to AppIndicator (menu
+  only, panel at the top right).
+- **TLS**: roots = system store (`rustls-native-certs`) + optional CA file (`usage-core/src/tls.rs`);
+  untrusted/name-mismatch errors map to `Error::Certificate` with fix-it text.
 - **Tauri's CLI rewrites `crates/tray/Cargo.toml`** formatting on build — harmless.
 - Tooling on the dev Mac: screenshots can't capture app windows (no Screen Recording permission) — use
   the browser preview or the Docker desktop; the Chrome extension wasn't connected (Playwright works);

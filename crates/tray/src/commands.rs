@@ -64,3 +64,24 @@ pub fn fit_height(window: WebviewWindow, height: f64) -> Result<(), String> {
     }
     Ok(())
 }
+
+/// The panel's settings view: LiteLLM address, status page, CA certificate. A new LiteLLM address
+/// signs the user out (the old sign-in belongs to the old proxy).
+#[tauri::command]
+pub fn save_settings(
+    app: AppHandle,
+    url: String,
+    status_url: String,
+    ca_cert: String,
+) -> Result<PanelState, String> {
+    account::configure(account::Setup {
+        url: Some(&url),
+        status_url: Some(&status_url),
+        ca_cert: Some(&ca_cert),
+        copy_ca: false,
+    })
+    .map_err(|e| e.to_string())?;
+    state::publish(&app);
+    refresh_in_background(app);
+    Ok(state::current())
+}

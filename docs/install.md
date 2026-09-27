@@ -59,8 +59,12 @@ machine still installs cleanly. apt installs only what's missing (on the test de
 packages).
 
 1. **Admin, once:** edit each folder's `install.conf`:
-   - tray: `LITELLM_URL`, `STATUS_URL` (or `""` to hide the Status link), `START_AT_LOGIN`
-   - ccline: `LITELLM_URL`, `SETUP_CLAUDE_STATUSLINE`
+   - tray: `LITELLM_URL`, `STATUS_URL` (or `""` to hide the Status link), `START_AT_LOGIN`, `CA_CERT`
+   - ccline: `LITELLM_URL`, `SETUP_CLAUDE_STATUSLINE`, `CA_CERT`
+
+   `CA_CERT` is for an internal certificate: an absolute path to the CA file on the machines (used
+   in place, so IT can update it), or the name of a CA file you put into the folder (copied during
+   install). Leave it empty if the machines already trust the certificate.
 
    Each installer refuses to run while the example addresses are still there. `SHA256SUMS` covers
    every file except `install.conf`, so editing it doesn't break the check. Give each user the tray

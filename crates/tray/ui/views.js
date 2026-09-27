@@ -198,10 +198,31 @@ const Views = {
           <button class="link-button" data-action="refresh"><span class="refresh-glyph" aria-hidden="true">↻</span> Refresh Now</button>
         </span>
         <span class="actions">
+          <button class="link-button" data-action="settings">Settings</button>
           <button class="link-button" data-action="sign-out">Sign Out</button>
           <button class="link-button" data-action="quit">Quit</button>
         </span>
       </div>`;
+  },
+
+  // "Change LiteLLM URL…" / Settings: LiteLLM address, status page, CA certificate.
+  settings(state, error, draft) {
+    const v = (x) => esc(x || "");
+    const d = draft || { url: state.proxy_url || state.suggested_url, statusUrl: state.status_url, caCert: state.ca_cert };
+    return `
+      <div class="section-title">Settings</div>
+      <div class="card"><div class="stack">
+        <label class="field"><span class="metric-label">LiteLLM Address</span>
+          <input class="text-input" id="set-url" value="${v(d.url)}" placeholder="https://your-litellm-proxy" spellcheck="false" /></label>
+        <label class="field"><span class="metric-label">Status Page</span>
+          <input class="text-input" id="set-status" value="${v(d.statusUrl)}" placeholder="Optional" spellcheck="false" /></label>
+        <label class="field"><span class="metric-label">CA Certificate File</span>
+          <input class="text-input" id="set-ca" value="${v(d.caCert)}" placeholder="Optional — for an internal certificate" spellcheck="false" /></label>
+        <div class="muted">Changing the LiteLLM address signs you out of the old one.</div>
+        ${error ? `<div class="muted notice">${esc(error)}</div>` : ""}
+        <button class="primary-button" data-action="save-settings">Save</button>
+      </div></div>
+      <div class="footer"><span></span><span class="actions"><button class="link-button" data-action="close-settings">Cancel</button></span></div>`;
   },
 
   // --- Sign-in flow --------------------------------------------------------
@@ -217,7 +238,7 @@ const Views = {
         ${error ? `<div class="muted notice">${esc(error)}</div>` : ""}
         <button class="primary-button" data-action="sign-in">Sign In</button>
       </div></div>
-      <div class="footer"><span></span><span class="actions"><button class="link-button" data-action="quit">Quit</button></span></div>`;
+      <div class="footer"><span></span><span class="actions"><button class="link-button" data-action="settings">Settings</button><button class="link-button" data-action="quit">Quit</button></span></div>`;
   },
 
   waiting(login) {

@@ -381,6 +381,12 @@ button {
   outline-offset: -1px;
 }
 
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .stack {
   display: flex;
   flex-direction: column;

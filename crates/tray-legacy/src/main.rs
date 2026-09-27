@@ -6,12 +6,12 @@
 
 mod commands;
 
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 use tauri::{
-    AppHandle, CustomMenuItem, Icon, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem,
-    WindowEvent,
+    AppHandle, CustomMenuItem, Icon, Manager, PhysicalPosition, SystemTray, SystemTrayEvent, SystemTrayMenu,
+    SystemTrayMenuItem, WindowEvent,
 };
 use tauri_plugin_positioner::{Position, WindowExt};
 use usage_core::gauge::{SIZE, ring_rgba};
@@ -29,6 +29,39 @@ pub struct AppState {
     /// Bumped on every new sign-in or cancel, so a stale polling thread stops.
     pub login_generation: Mutex<(u64, Option<String>)>,
     pub last_hidden: Mutex<Option<Instant>>,
+    /// Where the tray was clicked (StatusNotifierItem reports it); the panel opens next to it.
+    pub anchor: Mutex<Option<(i32, i32)>>,
+}
+
+/// Set once the app runs; the StatusNotifierItem icon (started before it) acts through it.
+static APP: OnceLock<AppHandle> = OnceLock::new();
+/// The StatusNotifierItem icon, when the desktop supports it (left click → panel, right click →
+/// menu). Otherwise Tauri 1's AppIndicator icon, which can only show the menu.
+static SNI: OnceLock<sni_tray::SniTray> = OnceLock::new();
+
+fn start_sni() -> bool {
+    let with_app = |f: fn(&AppHandle)| move || {
+        if let Some(app) = APP.get() {
+            f(app)
+        }
+    };
+    let actions = sni_tray::Actions {
+        open: Box::new(|pos| {
+            if let Some(app) = APP.get() {
+                toggle(app, pos)
+            }
+        }),
+        refresh: Box::new(with_app(|app| commands::refresh_in_background(app.clone()))),
+        settings: Box::new(with_app(show_settings)),
+        quit: Box::new(with_app(|app| app.exit(0))),
+    };
+    match sni_tray::SniTray::spawn(actions, &ring_rgba(None, false), SIZE, "LiteLLM Usage") {
+        Ok(tray) => SNI.set(tray).is_ok(),
+        Err(e) => {
+            log::error("tray", &format!("no StatusNotifierItem host, using the menu-only icon: {e}"));
+            false
+        }
+    }
 }
 
 fn main() {
@@ -40,20 +73,23 @@ fn main() {
     let menu = SystemTrayMenu::new()
         .add_item(CustomMenuItem::new("open", "Open"))
         .add_item(CustomMenuItem::new("refresh", "Refresh"))
+        .add_item(CustomMenuItem::new("settings", "Change LiteLLM URL…"))
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(CustomMenuItem::new("quit", "Quit"));
 
-    tauri::Builder::default()
-        .plugin(tauri_plugin_positioner::init())
-        .manage(AppState::default())
-        .system_tray(SystemTray::new().with_menu(menu))
+    let mut builder = tauri::Builder::default().plugin(tauri_plugin_positioner::init()).manage(AppState::default());
+    if !start_sni() {
+        builder = builder.system_tray(SystemTray::new().with_menu(menu));
+    }
+    builder
         .on_system_tray_event(|app, event| {
             tauri_plugin_positioner::on_tray_event(app, &event);
             match event {
-                SystemTrayEvent::LeftClick { .. } => toggle(app),
+                SystemTrayEvent::LeftClick { .. } => toggle(app, None),
                 SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
-                    "open" => show(app),
+                    "open" => show(app, None),
                     "refresh" => commands::refresh_in_background(app.clone()),
+                    "settings" => show_settings(app),
                     "quit" => app.exit(0),
                     _ => {}
                 },
@@ -67,13 +103,15 @@ fn main() {
             commands::open_url,
             commands::quit,
             commands::fit_height,
+            commands::save_settings,
             commands::start_login,
             commands::choose_team,
             commands::cancel_login,
         ])
         .setup(|app| {
+            let _ = APP.set(app.handle());
             if std::env::var_os("LITELLM_USAGE_OPEN_PANEL").is_some() {
-                show(&app.handle());
+                show(&app.handle(), None);
             }
             let handle = app.handle();
             std::thread::spawn(move || {
@@ -107,13 +145,18 @@ fn tick(app: &AppHandle) {
 /// Sends the current state to the panel and updates the tray icon and tooltip.
 pub fn publish(app: &AppHandle) {
     let state = PanelState::current();
-    let tray = app.tray_handle();
-    let _ = tray.set_icon(Icon::Rgba { rgba: ring_rgba(state.used_fraction(), false), width: SIZE, height: SIZE });
-    let _ = tray.set_tooltip(&state.tooltip());
+    let rgba = ring_rgba(state.used_fraction(), false);
+    if let Some(sni) = SNI.get() {
+        sni.update(&rgba, SIZE, &state.tooltip());
+    } else {
+        let tray = app.tray_handle();
+        let _ = tray.set_icon(Icon::Rgba { rgba, width: SIZE, height: SIZE });
+        let _ = tray.set_tooltip(&state.tooltip());
+    }
     let _ = app.emit_all("state", &state);
 }
 
-fn toggle(app: &AppHandle) {
+fn toggle(app: &AppHandle, click: Option<(i32, i32)>) {
     let Some(window) = app.get_window(PANEL) else { return };
     if window.is_visible().unwrap_or(false) {
         hide(app);
@@ -127,16 +170,25 @@ fn toggle(app: &AppHandle) {
         .and_then(|t| *t)
         .is_some_and(|t| t.elapsed() < REOPEN_GUARD);
     if !recently_hidden {
-        show(app);
+        show(app, click);
     }
 }
 
-pub fn show(app: &AppHandle) {
+pub fn show(app: &AppHandle, click: Option<(i32, i32)>) {
     let Some(window) = app.get_window(PANEL) else { return };
+    if let Ok(mut anchor) = app.state::<AppState>().anchor.lock() {
+        *anchor = click;
+    }
     place(&window);
     let _ = window.show();
     let _ = window.set_focus();
     publish(app);
+}
+
+/// "Change LiteLLM URL…": open the panel on its settings view.
+fn show_settings(app: &AppHandle) {
+    show(app, None);
+    let _ = app.emit_all("show-settings", ());
 }
 
 fn hide(app: &AppHandle) {
@@ -149,7 +201,21 @@ fn hide(app: &AppHandle) {
     }
 }
 
-/// Linux trays don't report their position, so the panel opens at the top right.
+/// Next to the click when known, else the top right of the screen (Linux trays don't report their
+/// position otherwise). Always kept on screen.
 pub fn place(window: &tauri::Window) {
+    let anchor = window.app_handle().state::<AppState>().anchor.lock().ok().and_then(|a| *a);
+    if let Some((x, y)) = anchor {
+        if let (Ok(Some(monitor)), Ok(size)) = (window.current_monitor(), window.outer_size()) {
+            let (mx, my) = (monitor.position().x, monitor.position().y);
+            let (mw, mh) = (monitor.size().width as i32, monitor.size().height as i32);
+            let (w, h) = (size.width as i32, size.height as i32);
+            let left = (x - w / 2).clamp(mx, mx + mw - w);
+            let top = if y < my + mh / 2 { y + 8 } else { y - h - 8 };
+            if window.set_position(PhysicalPosition::new(left, top.clamp(my, my + mh - h))).is_ok() {
+                return;
+            }
+        }
+    }
     let _ = window.move_window(Position::TopRight);
 }

@@ -18,6 +18,7 @@ open = "5"
 tauri = { version = "1", features = ["system-tray", "icon-png"] }
 tauri-plugin-positioner = { version = "1", features = ["system-tray"] }
 usage-core = { path = "../usage-core" }
+sni-tray = { path = "../sni-tray", version = "0.1.0" }
 
 [profile.release]
 opt-level = "s"

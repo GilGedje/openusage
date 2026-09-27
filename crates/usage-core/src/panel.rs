@@ -19,6 +19,8 @@ pub struct PanelState {
     pub usage_url: Option<String>,
     /// The organization's status page, when configured.
     pub status_url: Option<String>,
+    /// Custom CA certificate file, when configured.
+    pub ca_cert: Option<String>,
     pub cache: Option<CacheFile>,
     pub now: i64,
 }
@@ -32,6 +34,7 @@ impl PanelState {
         let cache = config.proxy_url.as_ref().and_then(|url| cache::read().filter(|c| &c.proxy_url == url));
         let usage_url = config.proxy_url.as_deref().map(config::usage_page_url);
         let status_url = config.status_page();
+        let ca_cert = config.ca_cert.clone();
         PanelState {
             signed_in: config.user_id.is_some(),
             user_id: config.user_id,
@@ -39,6 +42,7 @@ impl PanelState {
             suggested_url: account::resolve_proxy_url(None).ok(),
             usage_url,
             status_url,
+            ca_cert,
             cache,
             now: crate::now(),
         }

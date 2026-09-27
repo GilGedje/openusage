@@ -9,8 +9,11 @@ details. It shares its sign-in and cached numbers with `ccline`, so the two neve
   and shows the percentage next to it; on Windows and Ubuntu the ring turns yellow from 75% used and
   red from 90%.
 - Hovering shows `LiteLLM: $31.26 of $50.00 (63%)`.
-- Click it to open the panel (on Ubuntu, pick **Open** from its menu). Its menu also has **Refresh**
-  and **Quit**.
+- **Left click** opens the panel (next to the icon). **Right click** shows the menu: **Open**,
+  **Refresh**, **Change LiteLLM URL…**, **Quit**.
+- On Ubuntu the icon talks to the desktop's tray directly (StatusNotifierItem), which is what makes
+  left click open the panel. On a desktop without that support it falls back to the older icon,
+  where any click shows the menu (then **Open**).
 
 ## The panel
 
@@ -24,7 +27,9 @@ details. It shares its sign-in and cached numbers with `ccline`, so the two neve
   - **Today / Yesterday / Last 30 Days** — spend and tokens.
 - **Dashboard** — opens LiteLLM's own Usage page. **Status** — opens your organization's status page
   (shown only when one is set, see below).
-- **Footer** — when the numbers were last updated, **Refresh Now**, **Sign Out**, **Quit**.
+- **Footer** — when the numbers were last updated, **Refresh Now**, **Settings**, **Sign Out**, **Quit**.
+- **Settings** (also **Change LiteLLM URL…** in the icon's menu) — change the LiteLLM address, the
+  status page, and the CA certificate file. A new LiteLLM address signs you out of the old one.
 
 If LiteLLM can't be reached, the last numbers stay up with a note saying how old they are.
 
@@ -33,6 +38,13 @@ If LiteLLM can't be reached, the last numbers stay up with a note saying how old
 Same SSO sign-in as `ccline login`: enter your LiteLLM address (pre-filled from Claude Code's
 `ANTHROPIC_BASE_URL` or your last sign-in), click **Sign In**, finish in the browser, and type the
 code the panel shows. If you're in several teams, the panel asks which one Claude Code uses.
+
+## Internal certificates
+
+If LiteLLM uses your organization's own certificate, the app trusts it when either IT added the CA
+to the machine's certificates, or a CA file is set — `CA_CERT` in `install.conf`, the Settings view,
+or the `LITELLM_USAGE_CA_CERT` environment variable. Certificate checks are never turned off; an
+untrusted certificate shows a message saying how to fix it.
 
 ## Status page
 
