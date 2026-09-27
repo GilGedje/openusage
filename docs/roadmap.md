@@ -9,12 +9,15 @@ Everything left to do, with how to build it. Tick items off here as they land.
   Windows' 2,560-byte limit), usage cache, error log
 - `ccline`: status line with model, context, budget, today, reset, this model's 30-day spend
   (`docs/ccline.md`)
+- Tray app, first version (`docs/tray.md`)
+- ccline budget links to LiteLLM's Usage page; background refresh never waits on a Keychain prompt
 - CI workflow for Windows / Ubuntu / macOS (`.github/workflows/ci.yml`, not yet pushed)
 - Verified: macOS end to end; Ubuntu compiles and passes tests (Docker)
 
 ## Next: tray app (priority)
 
-Building now — see "Tray app" below. The ccline rollout items follow it.
+First version is in (`docs/tray.md`). Remaining tray items are under "Tray app" below; the ccline
+rollout items follow.
 
 ## Rolling out ccline (install script, air-gapped network)
 
@@ -96,12 +99,21 @@ Settings edits live in the binary (not in shell scripts) so they behave the same
 
 ## Tray app
 
-- Tauri v2 app reusing `usage-core`; UI styled with `design/theme.css`.
-- Tray icon with budget %; popup with budget bar, today, per-model spend, daily chart, sign-in and
-  sign-out, refresh.
-- Start at login; background refresh shares ccline's cache so the two never fetch twice.
-- Ubuntu tray needs AppIndicator (built into Ubuntu's desktop).
-- Offline installers per OS (`.msi`, `.deb`, `.dmg`) in the same bundle.
+Done: Tauri v2 app on `usage-core`, OpenUsage-style panel (Cost donut with Today / Yesterday /
+30 Days, budget meter with pace, daily chart), ring tray icon with %, SSO sign-in in the panel,
+Open LiteLLM link, shared cache with ccline.
+
+Still to do:
+- **Available Models** section (collapsed) and `ccline models` — `/v1/models` + `/model/info`; open
+  question whether to list user- or key-level access.
+- **Start at login** — `tauri-plugin-autostart`, a toggle in the panel footer.
+- **Rounded, translucent panel on macOS** — needs `macOSPrivateApi` + transparent window.
+- **Check on Windows and Ubuntu** — panel placement (Ubuntu has no tray click position, so the panel
+  opens top right), tray icon colors, AppIndicator on Ubuntu.
+- **Offline installers** per OS (`.msi`, `.deb`, `.dmg`) via `tauri build`, in the same bundle as
+  ccline; needs the Tauri CLI at build time.
+- **Stable Keychain approval on macOS** — every new unsigned build asks again; code signing (item 5
+  above) fixes it.
 
 ## Still to verify
 
