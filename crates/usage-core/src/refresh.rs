@@ -7,8 +7,8 @@ use crate::config::Config;
 use crate::snapshot::{self, Snapshot};
 use crate::{Error, Result, log, secret};
 
-/// Minimum seconds between refresh attempts (successful or failed).
-pub const REFRESH_SECS: i64 = 60;
+/// Seconds between automatic refreshes (successful or failed), shared by the tray and ccline.
+pub const REFRESH_SECS: i64 = 300;
 
 /// Whether the cache is due for a refresh.
 pub fn is_due(cache: Option<&CacheFile>, now: i64) -> bool {

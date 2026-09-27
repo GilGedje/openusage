@@ -61,6 +61,18 @@ const Format = {
     return { elapsed, runOutIn: now + secsToLimit < budget.reset_at ? secsToLimit : null };
   },
 
+  // "Refreshes in 4:32" until the next automatic refresh (every `refresh_secs`, shared with ccline).
+  countdown(state) {
+    const cache = state && state.cache;
+    if (!state || !state.signed_in) return "";
+    if (!cache) return "Refreshing…";
+    const left = cache.last_attempt + (state.refresh_secs || 300) - Math.floor(Date.now() / 1000);
+    if (left <= 0) return "Refreshing…";
+    const m = Math.floor(left / 60);
+    const s = String(left % 60).padStart(2, "0");
+    return `Refreshes in ${m}:${s}`;
+  },
+
   severity(fraction) {
     if (fraction >= 0.9) return "critical";
     if (fraction >= 0.75) return "warning";

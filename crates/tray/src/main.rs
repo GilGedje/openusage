@@ -45,6 +45,7 @@ fn main() {
             commands::quit,
             commands::fit_height,
             commands::save_settings,
+            commands::save_image,
             login::start_login,
             login::choose_team,
             login::cancel_login,

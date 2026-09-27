@@ -65,23 +65,17 @@ pub fn fit_height(window: WebviewWindow, height: f64) -> Result<(), String> {
     Ok(())
 }
 
-/// The panel's settings view: LiteLLM address, status page, CA certificate. A new LiteLLM address
-/// signs the user out (the old sign-in belongs to the old proxy).
+/// Settings view: a new LiteLLM address (the old sign-in belongs to the old proxy, so it ends).
 #[tauri::command]
-pub fn save_settings(
-    app: AppHandle,
-    url: String,
-    status_url: String,
-    ca_cert: String,
-) -> Result<PanelState, String> {
-    account::configure(account::Setup {
-        url: Some(&url),
-        status_url: Some(&status_url),
-        ca_cert: Some(&ca_cert),
-        copy_ca: false,
-    })
-    .map_err(|e| e.to_string())?;
+pub fn save_settings(app: AppHandle, url: String) -> Result<PanelState, String> {
+    account::configure(account::Setup { url: Some(&url), ..Default::default() }).map_err(|e| e.to_string())?;
     state::publish(&app);
     refresh_in_background(app);
     Ok(state::current())
+}
+
+/// The Cost card exported as a PNG (share button): saved to Downloads; returns the file's path.
+#[tauri::command]
+pub fn save_image(bytes: Vec<u8>, name: String) -> Result<String, String> {
+    usage_core::export::save_png(&bytes, &name).map(|p| p.to_string_lossy().into_owned()).map_err(|e| e.to_string())
 }

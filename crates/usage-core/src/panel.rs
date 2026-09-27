@@ -23,6 +23,8 @@ pub struct PanelState {
     pub ca_cert: Option<String>,
     pub cache: Option<CacheFile>,
     pub now: i64,
+    /// Seconds between automatic refreshes (the panel shows a countdown to the next one).
+    pub refresh_secs: i64,
 }
 
 impl PanelState {
@@ -45,6 +47,7 @@ impl PanelState {
             ca_cert,
             cache,
             now: crate::now(),
+            refresh_secs: crate::refresh::REFRESH_SECS,
         }
     }
 
@@ -57,14 +60,14 @@ impl PanelState {
     pub fn tooltip(&self) -> String {
         match (self.snapshot(), self.used_fraction()) {
             (Some(s), Some(f)) => format!(
-                "LiteLLM: ${:.2} of ${:.2} ({:.0}%)",
+                "Claude budget: ${:.2} of ${:.2} ({:.0}%)",
                 s.budget.spend,
                 s.budget.max_budget.unwrap_or_default(),
                 f * 100.0
             ),
-            (Some(s), None) => format!("LiteLLM: ${:.2} spent", s.budget.spend),
-            _ if !self.signed_in => "LiteLLM: signed out".to_string(),
-            _ => "LiteLLM Usage".to_string(),
+            (Some(s), None) => format!("Claude: ${:.2} spent", s.budget.spend),
+            _ if !self.signed_in => "Claude usage: signed out".to_string(),
+            _ => "Claude usage".to_string(),
         }
     }
 

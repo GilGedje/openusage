@@ -4,10 +4,12 @@ use ksni::blocking::{Handle, TrayMethods};
 use ksni::menu::{MenuItem, StandardItem};
 use ksni::{Category, Icon, ToolTip};
 
+/// Left click (with the click's screen position when the desktop reports one), or "Open".
+pub type OpenAction = Box<dyn Fn(Option<(i32, i32)>) + Send + Sync>;
+
 /// What the tray's clicks and menu do. Called on the tray's own thread.
 pub struct Actions {
-    /// Left click (with the click's screen position when the desktop reports one), or "Open".
-    pub open: Box<dyn Fn(Option<(i32, i32)>) + Send + Sync>,
+    pub open: OpenAction,
     pub refresh: Box<dyn Fn() + Send + Sync>,
     /// "Change LiteLLM URL…"
     pub settings: Box<dyn Fn() + Send + Sync>,
@@ -88,6 +90,6 @@ impl SniTray {
 
 /// RGBA → the ARGB32 (network byte order) that StatusNotifierItem expects.
 fn icon(rgba: &[u8], size: u32) -> Icon {
-    let data = rgba.chunks_exact(4).flat_map(|p| [p[3], p[0], p[1], p[2]]).collect();
+    let data = rgba.as_chunks::<4>().0.iter().flat_map(|&[r, g, b, a]| [a, r, g, b]).collect();
     Icon { width: size as i32, height: size as i32, data }
 }

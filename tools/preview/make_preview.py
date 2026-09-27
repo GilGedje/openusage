@@ -44,15 +44,35 @@ def main() -> None:
     shutil.copytree(ROOT / "crates/tray/ui", OUT)
     shutil.copy(ROOT / "design/theme.css", OUT / "theme.css")
 
-    stub = f"""<script>
-const STATE = {json.dumps(state)};
-window.__TAURI__ = {{ core: {{ invoke: async (cmd) => (cmd === "get_state" || cmd === "refresh" ? STATE : null) }},
-                      event: {{ listen: async () => {{}} }} }};
-try {{ localStorage.setItem("period", new URLSearchParams(location.search).get("period") || "today"); }} catch {{}}
-</script>"""
+    stub = """<script>
+const STATE = __STATE__;
+const Q = new URLSearchParams(location.search);
+STATE.cache.error = null;                     // clean shots: hide this machine's stale-data banner
+STATE.cache.last_attempt = Math.floor(Date.now() / 1000) - 83;
+if (Q.get("view") === "signin") STATE.signed_in = false;
+const listeners = {};
+window.__TAURI__ = {
+  core: { invoke: async (cmd, args) => {
+    switch (cmd) {
+      case "get_state": case "refresh": case "save_settings": return STATE;
+      case "sign_out": return { ...STATE, signed_in: false };
+      case "start_login": return { code: "KS5Y-YGXQ", link: "#", proxy_url: STATE.proxy_url };
+      case "save_image": return "/home/you/Downloads/" + args.name + ".png";
+      default: return null;
+    }
+  } },
+  event: { listen: async (name, fn) => { listeners[name] = fn; } },
+};
+window.__emit = (name, payload) => listeners[name] && listeners[name]({ payload });
+try { localStorage.setItem("period", Q.get("period") || "today"); localStorage.setItem("theme", Q.get("theme") || "system"); } catch {}
+</script>""".replace("__STATE__", json.dumps(state))
     html = (OUT / "index.html").read_text()
     html = html.replace('<script src="format.js">', stub + '\n    <script src="format.js">')
     html = html.replace("</head>", "<style>body{width:320px;margin:0}</style></head>")
+    # Cache-bust so a browser never mixes old and new scripts.
+    stamp = str(int(time.time()))
+    for f in ("format.js", "views.js", "share.js", "app.js", "theme.css", "panel.css"):
+        html = html.replace(f'"{f}"', f'"{f}?v={stamp}"')
     (OUT / "index.html").write_text(html)
     print(f"Preview ready in {OUT}")
 

@@ -7,6 +7,7 @@ pub mod cache;
 pub mod client;
 pub mod config;
 pub mod error;
+pub mod export;
 pub mod gauge;
 pub mod log;
 pub mod login_flow;

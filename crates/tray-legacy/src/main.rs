@@ -104,6 +104,7 @@ fn main() {
             commands::quit,
             commands::fit_height,
             commands::save_settings,
+            commands::save_image,
             commands::start_login,
             commands::choose_team,
             commands::cancel_login,

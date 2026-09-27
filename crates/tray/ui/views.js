@@ -1,5 +1,5 @@
-// HTML for each panel view. Pure functions of the state; app.js wires up the buttons.
-// Layout mirrors OpenUsage: a Cost card (period switch + donut), then the account card.
+// HTML for each panel view. Pure functions of the state; app.js wires up the buttons and motion.
+// Layout mirrors OpenUsage: a Cost card (period switch + donut), then the Claude budget card.
 
 const esc = Format.escape;
 
@@ -10,6 +10,18 @@ const PERIODS = [
 ];
 const LEGEND_MAX = 5;
 
+// Inline icons (no external files: the app runs air-gapped). Stroke follows the text color.
+const svg = (body, size = 15) =>
+  `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+const Icons = {
+  cog: svg(
+    '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  ),
+  refresh: svg('<path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/>', 14),
+  share: svg('<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>', 15),
+  back: svg('<polyline points="15 18 9 12 15 6"/>', 16),
+};
+
 const Views = {
   usage(state, period) {
     const cache = state.cache;
@@ -17,12 +29,12 @@ const Views = {
     const err = cache && cache.error;
     if (!snap) {
       const msg = err ? esc(err.message) : "Loading your usage…";
-      return this.accountHeader(state) + `<div class="card"><div class="stack"><div class="muted">${msg}</div></div></div>` + this.footer(state);
+      return this.accountHeader() + `<div class="card"><div class="stack"><div class="muted">${msg}</div></div></div>` + this.footer(state);
     }
     return (
       (err ? this.staleBanner(err, snap, state.now) : "") +
       this.cost(snap, period) +
-      this.accountHeader(state) +
+      this.accountHeader() +
       this.account(snap, state.now) +
       this.links(state) +
       this.footer(state)
@@ -37,6 +49,7 @@ const Views = {
 
   cost(snap, period) {
     const { total, models } = this.periodData(snap, period);
+    const index = Math.max(0, PERIODS.findIndex((p) => p.key === period));
     const segs = PERIODS.map(
       (p) => `<button class="segment ${p.key === period ? "selected" : ""}" data-action="period" data-period="${p.key}">${p.label}</button>`,
     ).join("");
@@ -55,9 +68,14 @@ const Views = {
       : `<div class="muted">No spend</div>`;
     return `
       <section class="section">
-        <div class="section-title">Cost</div>
-        <div class="card cost-card">
-          <div class="segmented">${segs}</div>
+        <div class="section-header-row">
+          <div class="section-title">Cost</div>
+          <button class="icon-button" data-action="share" aria-label="Export as image">${Icons.share}</button>
+        </div>
+        <div class="card cost-card" id="cost-card">
+          <div class="segmented" style="--segment-index:${index}">
+            <span class="segment-thumb" aria-hidden="true"></span>${segs}
+          </div>
           <div class="cost-body">
             ${this.donut(legend, total.spend)}
             <div class="legend">${rows}</div>
@@ -98,8 +116,8 @@ const Views = {
       .map((m) => {
         const len = total > 0 ? (m.spend / total) * c : 0;
         const dash = Math.max(len - gap, 0.5);
-        const arc = `<circle r="${r}" cx="55" cy="55" fill="none" stroke="${m.color}" stroke-width="16"
-          stroke-dasharray="${dash} ${c - dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 55 55)" />`;
+        const arc = `<circle class="arc" r="${r}" cx="55" cy="55" fill="none" stroke="${m.color}" stroke-width="16"
+          stroke-dasharray="${dash} ${c - dash}" stroke-dashoffset="${-offset}" data-dash="${dash}" data-circ="${c}" transform="rotate(-90 55 55)" />`;
         offset += len;
         return arc;
       })
@@ -121,21 +139,17 @@ const Views = {
         const v = byDate.get(d) || 0;
         const h = max > 0 && v > 0 ? Math.max(6, (v / max) * 100) : 6;
         const cls = ["bar", v > 0 ? "" : "empty", i === dates.length - 1 ? "today" : ""].join(" ");
-        return `<div class="${cls}" style="height:${h}%"></div>`;
+        return `<div class="${cls}" style="height:${h}%;--i:${i}"></div>`;
       })
       .join("");
     return `<div class="chart" aria-label="Daily spend, last 30 days">${bars}</div>
       <div class="chart-axis"><span>30 days ago</span><span>Today</span></div>`;
   },
 
-  // --- Account card --------------------------------------------------------
+  // --- Claude budget card --------------------------------------------------
 
-  accountHeader(state) {
-    const user = state.user_id ? `<span class="subtitle">${esc(state.user_id)}</span>` : "";
-    return `
-      <div class="section-header-row">
-        <div class="section-title">LiteLLM ${user}</div>
-      </div>`;
+  accountHeader() {
+    return `<div class="section-header-row"><div class="section-title">Claude</div></div>`;
   },
 
   account(snap, now) {
@@ -188,41 +202,52 @@ const Views = {
     return items.length ? `<div class="provider-links">${items.join("")}</div>` : "";
   },
 
+  // Bottom left: auto-refresh countdown + refresh button. Bottom right: settings.
   footer(state) {
-    const cache = state.cache;
-    const updated = cache && cache.snapshot ? `Updated ${Format.duration(state.now - cache.snapshot.fetched_at)} ago` : "";
     return `
       <div class="footer">
         <span class="footer-status">
-          <span>${updated}</span>
-          <button class="link-button" data-action="refresh"><span class="refresh-glyph" aria-hidden="true">↻</span> Refresh Now</button>
+          <span id="countdown" class="num">${Format.countdown(state)}</span>
+          <button class="icon-button small" data-action="refresh" aria-label="Refresh now">${Icons.refresh}</button>
         </span>
-        <span class="actions">
-          <button class="link-button" data-action="settings">Settings</button>
-          <button class="link-button" data-action="sign-out">Sign Out</button>
-          <button class="link-button" data-action="quit">Quit</button>
-        </span>
+        <button class="icon-button" data-action="settings" aria-label="Settings">${Icons.cog}</button>
       </div>`;
   },
 
-  // "Change LiteLLM URL…" / Settings: LiteLLM address, status page, CA certificate.
-  settings(state, error, draft) {
-    const v = (x) => esc(x || "");
-    const d = draft || { url: state.proxy_url || state.suggested_url, statusUrl: state.status_url, caCert: state.ca_cert };
+  // --- Settings (cogwheel, or "Change LiteLLM URL…" in the tray menu) -------
+
+  settings(state, { error, draftUrl, theme }) {
+    const url = draftUrl ?? (state.proxy_url || state.suggested_url || "");
+    const themes = [
+      { key: "system", label: "System" },
+      { key: "light", label: "Light" },
+      { key: "dark", label: "Dark" },
+    ];
+    const index = Math.max(0, themes.findIndex((t) => t.key === theme));
+    const segs = themes
+      .map((t) => `<button class="segment ${t.key === theme ? "selected" : ""}" data-action="theme" data-theme="${t.key}">${t.label}</button>`)
+      .join("");
+    const signOut = state.signed_in
+      ? `<div class="card"><button class="row-button destructive" data-action="sign-out">Sign Out</button></div>`
+      : "";
     return `
-      <div class="section-title">Settings</div>
+      <div class="section-header-row settings-header">
+        <button class="back-button" data-action="close-settings" aria-label="Back">${Icons.back}<span>Back</span></button>
+        <div class="section-title">Settings</div>
+        <span class="header-spacer"></span>
+      </div>
       <div class="card"><div class="stack">
         <label class="field"><span class="metric-label">LiteLLM Address</span>
-          <input class="text-input" id="set-url" value="${v(d.url)}" placeholder="https://your-litellm-proxy" spellcheck="false" /></label>
-        <label class="field"><span class="metric-label">Status Page</span>
-          <input class="text-input" id="set-status" value="${v(d.statusUrl)}" placeholder="Optional" spellcheck="false" /></label>
-        <label class="field"><span class="metric-label">CA Certificate File</span>
-          <input class="text-input" id="set-ca" value="${v(d.caCert)}" placeholder="Optional — for an internal certificate" spellcheck="false" /></label>
-        <div class="muted">Changing the LiteLLM address signs you out of the old one.</div>
+          <input class="text-input" id="set-url" value="${esc(url)}" placeholder="https://your-litellm-proxy" spellcheck="false" /></label>
+        <div class="muted">Changing it signs you out of the old one.</div>
         ${error ? `<div class="muted notice">${esc(error)}</div>` : ""}
-        <button class="primary-button" data-action="save-settings">Save</button>
+        <button class="primary-button" data-action="save-url">Save</button>
       </div></div>
-      <div class="footer"><span></span><span class="actions"><button class="link-button" data-action="close-settings">Cancel</button></span></div>`;
+      <div class="card"><div class="stack">
+        <span class="metric-label">Appearance</span>
+        <div class="segmented" style="--segment-index:${index}"><span class="segment-thumb" aria-hidden="true"></span>${segs}</div>
+      </div></div>
+      ${signOut}`;
   },
 
   // --- Sign-in flow --------------------------------------------------------
@@ -230,25 +255,25 @@ const Views = {
   signIn(state, error, draftUrl) {
     const url = draftUrl ?? (state.suggested_url || state.proxy_url || "");
     return `
-      <div class="section-title">LiteLLM</div>
+      <div class="section-header-row"><div class="section-title">Claude</div></div>
       <div class="card"><div class="stack">
         <div class="metric-label">Sign In</div>
-        <div class="muted">Sign in with your company SSO to see your LiteLLM budget and usage.</div>
+        <div class="muted">Sign in with your company SSO to see your Claude budget and usage.</div>
         <input class="text-input" id="proxy-url" placeholder="https://your-litellm-proxy" value="${esc(url)}" spellcheck="false" />
         ${error ? `<div class="muted notice">${esc(error)}</div>` : ""}
         <button class="primary-button" data-action="sign-in">Sign In</button>
       </div></div>
-      <div class="footer"><span></span><span class="actions"><button class="link-button" data-action="settings">Settings</button><button class="link-button" data-action="quit">Quit</button></span></div>`;
+      <div class="footer"><span></span><button class="icon-button" data-action="settings" aria-label="Settings">${Icons.cog}</button></div>`;
   },
 
   waiting(login) {
     return `
-      <div class="section-title">LiteLLM</div>
+      <div class="section-header-row"><div class="section-title">Claude</div></div>
       <div class="card"><div class="stack">
         <div class="metric-label">Finish In Your Browser</div>
         <div class="muted">Sign in with SSO, then enter this code:</div>
         <div class="code">${esc(login.code)}</div>
-        <div class="muted">Waiting for you to finish…</div>
+        <div class="muted waiting-dots">Waiting for you to finish</div>
         <button class="link-button" data-action="open-link">Open Browser Again</button>
       </div></div>
       <div class="footer"><span></span><span class="actions"><button class="link-button" data-action="cancel-login">Cancel</button></span></div>`;
@@ -259,7 +284,7 @@ const Views = {
       .map((t) => `<button data-action="team" data-team="${esc(t.team_id)}">${esc(t.team_alias || t.team_id)}</button>`)
       .join("");
     return `
-      <div class="section-title">LiteLLM</div>
+      <div class="section-header-row"><div class="section-title">Claude</div></div>
       <div class="card"><div class="stack">
         <div class="metric-label">Choose Your Team</div>
         <div class="muted">You're in several teams. Pick the one Claude Code uses.</div>
