@@ -23,6 +23,26 @@ jobs:
         shell: pwsh
         run: |
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition @'
+          using System; using System.Collections.Generic; using System.Drawing; using System.Runtime.InteropServices;
+          public static class Win {
+            public delegate bool EnumProc(IntPtr h, IntPtr l);
+            [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc f, IntPtr l);
+            [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+            [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+            [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+            [DllImport("user32.dll")] static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
+            [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+            [StructLayout(LayoutKind.Sequential)] public struct RECT { public int L, T, R, B; }
+            public static List<IntPtr> Of(uint pid) { var list = new List<IntPtr>();
+              EnumWindows((h, l) => { uint p; GetWindowThreadProcessId(h, out p); if (p == pid) list.Add(h); return true; }, IntPtr.Zero); return list; }
+            public static string Title(IntPtr h) { var s = new System.Text.StringBuilder(256); GetWindowText(h, s, 256); return s.ToString(); }
+            public static void Capture(IntPtr h, string path) { RECT r; GetWindowRect(h, out r);
+              int w = Math.Max(1, r.R - r.L), ht = Math.Max(1, r.B - r.T);
+              using (var bmp = new Bitmap(w, ht)) using (var g = Graphics.FromImage(bmp)) {
+                var dc = g.GetHdc(); PrintWindow(h, dc, 2); g.ReleaseHdc(dc); bmp.Save(path); } }
+          }
+          '@
           function Shot($name) {
             $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
             $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
@@ -44,6 +64,13 @@ jobs:
             Start-Sleep -Seconds 12
             if ($p.HasExited) { Write-Host "app exited with code $($p.ExitCode)" } else { Write-Host "app running (pid $($p.Id))" }
             Shot "windows-$($mode.n)"
+            New-Item -ItemType Directory -Force shots | Out-Null
+            foreach ($h in [Win]::Of([uint32]$p.Id)) {
+              $r = New-Object Win+RECT; [void][Win]::GetWindowRect($h, [ref]$r)
+              $t = [Win]::Title($h)
+              Write-Host ("window '{0}' visible={1} rect=({2},{3})-({4},{5})" -f $t, [Win]::IsWindowVisible($h), $r.L, $r.T, $r.R, $r.B)
+              if ($t -like 'Quota*') { [Win]::Capture($h, "$PWD\shots\panel-$($mode.n).png") }
+            }
             Stop-Process -Id $p.Id -Force
             Start-Sleep -Seconds 2
           }
