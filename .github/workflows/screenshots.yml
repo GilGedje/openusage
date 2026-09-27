@@ -1,0 +1,50 @@
+name: Screenshots
+
+# Runs the real tray app on a Windows machine with sample data (tools/ci/demo_state.py) and captures
+# the screen in light and dark mode — for reviewing the Windows look without a Windows PC.
+on:
+  push:
+    branches: [litellm-usage]
+    paths: ["crates/tray/**", "crates/usage-core/**", "design/**", "tools/ci/**", ".github/workflows/screenshots.yml"]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build the tray app
+        run: cargo build --release -p litellm-usage-tray
+      - name: Sample data (signed in, fresh numbers, no network needed)
+        run: python tools/ci/demo_state.py "$env:APPDATA" "$env:LOCALAPPDATA"
+      - name: Screenshots, light and dark
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          function Shot($name) {
+            $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+            $g = [System.Drawing.Graphics]::FromImage($bmp)
+            $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+            New-Item -ItemType Directory -Force shots | Out-Null
+            $bmp.Save("shots/$name.png", [System.Drawing.Imaging.ImageFormat]::Png)
+          }
+          $theme = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
+          New-Item -Force -Path $theme | Out-Null
+          foreach ($mode in @(@{n='light';v=1}, @{n='dark';v=0})) {
+            Set-ItemProperty -Path $theme -Name AppsUseLightTheme -Value $mode.v -Type DWord
+            Set-ItemProperty -Path $theme -Name SystemUsesLightTheme -Value $mode.v -Type DWord
+            $env:LITELLM_USAGE_OPEN_PANEL = '1'
+            $p = Start-Process -PassThru target\release\litellm-usage.exe
+            Start-Sleep -Seconds 12
+            Shot "windows-$($mode.n)"
+            Stop-Process -Id $p.Id -Force
+            Start-Sleep -Seconds 2
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-screenshots
+          path: shots/*.png
+          if-no-files-found: error
