@@ -9,8 +9,8 @@ Sonnet 3.5 · ctx 42% 84k/200k · ▰▰▰▱▱ $31.26/$50.00 63% · today $0.
 - **Model** — the model Claude Code is using right now.
 - **ctx** — how full this conversation's context window is, with tokens used and the window size.
   Blue below 75%, yellow from 75%, red from 90%. Appears after Claude's first reply.
-- **Budget meter** — spend in the current budget window against your limit. Blue below 75%, yellow from
-  75%, red from 90%. Without a limit it reads `$12.40 spent · no limit`.
+- **Budget meter** — spend in the current budget window against your limit. Blue, then the warning
+  color from 75% used, then the critical color from 90% (both set in the tray's **Settings → Alerts**). Without a limit it reads `$12.40 spent · no limit`.
 - **today** — today's spend.
 - **resets** — time until the budget window resets.
 - **this model/30d** — what the current model has cost you over the last 30 days (shown when LiteLLM

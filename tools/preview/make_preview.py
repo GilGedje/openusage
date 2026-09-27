@@ -58,6 +58,10 @@ window.__TAURI__ = {
       case "sign_out": return { ...STATE, signed_in: false };
       case "start_login": return { code: "KS5Y-YGXQ", link: "#", proxy_url: STATE.proxy_url };
       case "save_image": return "/home/you/Downloads/" + args.name + ".png";
+      case "save_alerts":
+        STATE.alerts = { warning_pct: args.warningPct, warning_color: args.warningColor, critical_pct: args.criticalPct, critical_color: args.criticalColor };
+        setTimeout(() => window.__emit("state", STATE)); // like the app's publish
+        return STATE;
       default: return null;
     }
   } },
@@ -71,7 +75,7 @@ try { localStorage.setItem("period", Q.get("period") || "today"); localStorage.s
     html = html.replace("</head>", "<style>body{width:320px;margin:0}</style></head>")
     # Cache-bust so a browser never mixes old and new scripts.
     stamp = str(int(time.time()))
-    for f in ("format.js", "views.js", "share.js", "app.js", "theme.css", "panel.css"):
+    for f in ("format.js", "views.js", "alerts.js", "share.js", "app.js", "theme.css", "panel.css", "alerts.css"):
         html = html.replace(f'"{f}"', f'"{f}?v={stamp}"')
     (OUT / "index.html").write_text(html)
     print(f"Preview ready in {OUT}")

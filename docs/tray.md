@@ -5,8 +5,9 @@ details. It shares its sign-in and cached numbers with `ccline`, so the two neve
 
 ## The tray icon
 
-- The Claude mark inside a thin ring that fills as you spend your budget: blue, yellow from 75% used,
-  red from 90%. On macOS the menu bar shows it in one color (the percentage sits next to it).
+- The Claude mark inside a thin ring that fills as you spend your budget: blue, then the warning
+  color (from 75% used), then the critical color (from 90%). Both levels and colors can be changed in
+  **Settings → Alerts**. On macOS the menu bar shows it in one color (the percentage sits next to it).
 - Hovering shows `Quota — Claude budget: $41.62 of $100.00 (42%)`.
 - **Left click** opens the panel (next to the icon). **Right click** shows the menu: **Open**,
   **Refresh**, **Change LiteLLM URL…**, **Quit**.
@@ -22,16 +23,23 @@ details. It shares its sign-in and cached numbers with `ccline`, so the two neve
 - **Cost** — what you spent **Today**, **Yesterday**, or over the last **30 Days**, as a donut split
   by model with the amount per model. The five biggest models get their own color; the rest are
   grouped as **Other**. The 30 Days view adds a bar per day. The panel remembers your choice.
-- **LiteLLM** (with your user name):
+- **Claude** (with your total budget, e.g. `$100`):
   - **Budget** — how much of your budget is left, when it resets, and a tick showing where you'd be
     if you spent evenly across the budget window. If you're spending fast enough to run out before the
     reset, it warns **Limit in …** instead.
   - **Today / Yesterday / Last 30 Days** — spend and tokens.
 - **Dashboard** — opens LiteLLM's own Usage page. **Status** — opens your organization's status page
   (shown only when one is set, see below).
-- **Footer** — when the numbers were last updated, **Refresh Now**, **Settings**, **Sign Out**, **Quit**.
-- **Settings** (also **Change LiteLLM URL…** in the icon's menu) — change the LiteLLM address, the
-  status page, and the CA certificate file. A new LiteLLM address signs you out of the old one.
+- **Footer** — the countdown to the next refresh and a refresh button (left), and the Settings
+  cogwheel (right). **Quit** is only in the icon's right-click menu.
+- **Settings** (also **Change LiteLLM URL…** in the icon's menu):
+  - **LiteLLM Address** — a new address signs you out of the old one.
+  - **Alerts** — drag the two handles on the bar to set where the warning and critical colors start
+    (arrow keys move one percent at a time). Tap **Warning** or **Critical** to pick its color. A tick on
+    the bar shows where your budget is now. These colors apply to the tray icon, the budget bar, and the
+    `ccline` budget meter.
+  - **Appearance** — System, Light, or Dark.
+  - **Sign Out**.
 
 If LiteLLM can't be reached, the last numbers stay up with a note saying how old they are.
 

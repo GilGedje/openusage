@@ -1,0 +1,327 @@
+/* Settings → Alerts (alerts.js): a threshold track with two thumbs, then one grouped row per level
+   that reveals its colors. Kept to CSS the Ubuntu 20.04 WebKitGTK understands (no inset, :has,
+   color-mix or nesting); where a transition isn't supported the end state is still right. */
+
+.alerts-card {
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --thumb: 20px;
+  overflow: hidden;
+}
+
+.alerts-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 12px var(--row-padding-x) 0;
+}
+
+.alerts-now {
+  font-size: var(--font-supporting);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Track ------------------------------------------------------------------------------------- */
+
+.threshold {
+  position: relative;
+  height: 24px;
+  margin: 10px var(--row-padding-x) 12px;
+  touch-action: none;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Inset by half a thumb so a thumb at 0% or 100% stays inside the card. */
+.threshold-rail {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--thumb) / 2);
+  right: calc(var(--thumb) / 2);
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 3px;
+  background: var(--meter-track);
+}
+
+.threshold-zones {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    to right,
+    var(--meter-normal) 0,
+    var(--meter-normal) calc(var(--w) * 1%),
+    var(--warning-color) calc(var(--w) * 1%),
+    var(--warning-color) calc(var(--c) * 1%),
+    var(--critical-color) calc(var(--c) * 1%),
+    var(--critical-color) 100%
+  );
+}
+
+/* Where the budget stands right now. */
+.threshold-now {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: calc(var(--at) * 1%);
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--text);
+  opacity: 0.75;
+}
+
+.threshold-thumb {
+  position: absolute;
+  top: 50%;
+  left: calc((100% - var(--thumb)) * var(--pos) / 100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--thumb);
+  height: var(--thumb);
+  margin-top: calc(var(--thumb) / -2);
+  border-radius: 50%;
+  background: var(--knob);
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: grab;
+  transition: transform 160ms var(--ease), box-shadow 160ms ease;
+}
+
+.threshold-thumb:focus {
+  outline: none;
+  z-index: 1;
+}
+
+.threshold-thumb:focus-visible {
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.18), 0 0 0 3px var(--meter-normal);
+}
+
+/* Grows toward the hand while held. */
+.threshold-thumb.pressed {
+  z-index: 2;
+  transform: scale(1.12);
+  cursor: grabbing;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.18), 0 6px 14px rgba(0, 0, 0, 0.16);
+}
+
+.thumb-core {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15);
+}
+
+#thumb-warning .thumb-core {
+  background: var(--warning-color);
+}
+
+#thumb-critical .thumb-core {
+  background: var(--critical-color);
+}
+
+/* Rows -------------------------------------------------------------------------------------- */
+
+.alert-level {
+  position: relative;
+}
+
+/* Hairlines inset to the text, System Settings style. */
+.alert-level::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--row-padding-x);
+  right: 0;
+  height: 1px;
+  background: var(--separator);
+}
+
+.alert-level + .alert-level::before {
+  left: calc(var(--row-padding-x) + 22px);
+}
+
+.alert-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px var(--row-padding-x);
+  font-size: var(--font-label);
+  text-align: left;
+  transition: background-color 150ms ease;
+}
+
+.alert-row:hover {
+  background: var(--card-fill);
+}
+
+.alert-row:active {
+  background: var(--segment-track);
+}
+
+.alert-row:focus-visible {
+  outline: 2px solid var(--meter-normal);
+  outline-offset: -2px;
+}
+
+.alert-chip {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.18);
+  transition: background-color 200ms ease;
+}
+
+.alert-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.alert-value {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.alert-chevron {
+  display: inline-flex;
+  color: var(--text-tertiary);
+  transition: transform 320ms var(--ease);
+}
+
+.open .alert-chevron {
+  transform: rotate(90deg);
+}
+
+/* Colors, revealed under the row ------------------------------------------------------------ */
+
+.alert-colors {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 320ms var(--ease);
+}
+
+.open .alert-colors {
+  grid-template-rows: 1fr;
+}
+
+/* Hidden (and out of the tab order) once closed. */
+.alert-colors-inner {
+  min-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  transition: visibility 0s linear 320ms;
+}
+
+.open .alert-colors-inner {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.swatches {
+  display: flex;
+  gap: 12px;
+  padding: 2px var(--row-padding-x) 12px calc(var(--row-padding-x) + 22px);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 160ms ease, transform 320ms var(--ease);
+}
+
+.open .swatches {
+  opacity: 1;
+  transform: none;
+  transition-delay: 60ms, 0s;
+}
+
+.swatch {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15);
+  transition: transform 120ms ease-out;
+}
+
+/* The chosen color carries a dot in the middle (dark on the light yellows so it still reads). */
+.swatch::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: #ffffff;
+  transform: scale(0);
+  transition: transform 220ms var(--ease);
+}
+
+.swatch.light::after {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.swatch.selected::after {
+  transform: scale(1);
+}
+
+.swatch:hover {
+  transform: scale(1.08);
+}
+
+.swatch:active {
+  transform: scale(0.92);
+}
+
+.swatch:focus-visible {
+  outline: 2px solid var(--meter-normal);
+  outline-offset: 2px;
+}
+
+/* Note under the card ------------------------------------------------------------------------ */
+
+.card-footnote {
+  padding: 6px var(--row-padding-x) 0;
+  font-size: var(--font-supporting);
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.card-footnote.notice {
+  color: var(--notice);
+}
+
+.card-footnote + .card {
+  margin-top: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .threshold-thumb,
+  .alert-chevron,
+  .alert-colors,
+  .alert-colors-inner,
+  .swatch,
+  .swatch::after {
+    transition: none;
+  }
+
+  .threshold-thumb.pressed,
+  .swatch:hover,
+  .swatch:active {
+    transform: none;
+  }
+
+  /* A plain fade stands in for the slide. */
+  .swatches,
+  .open .swatches {
+    transform: none;
+    transition: opacity 150ms ease;
+  }
+}

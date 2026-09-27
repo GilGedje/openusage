@@ -9,8 +9,6 @@ const PERIODS = [
   { key: "30d", label: "30 Days" },
 ];
 const LEGEND_MAX = 5;
-// Alert colors to choose from (Settings → Alerts).
-const ALERT_SWATCHES = ["#ffd60a", "#ff9f0a", "#ff453a", "#ff375f", "#bf5af2"];
 
 // Inline icons (no external files: the app runs air-gapped). Stroke follows the text color.
 const svg = (body, size = 15) =>
@@ -22,6 +20,7 @@ const Icons = {
   refresh: svg('<path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/>', 14),
   share: svg('<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>', 15),
   back: svg('<polyline points="15 18 9 12 15 6"/>', 16),
+  chevron: svg('<polyline points="9 6 15 12 9 18"/>', 12),
 };
 
 const Views = {
@@ -231,7 +230,7 @@ const Views = {
 
   // --- Settings (cogwheel, or "Change LiteLLM URL…" in the tray menu) -------
 
-  settings(state, { error, draftUrl, theme, alertError }) {
+  settings(state, { error, draftUrl, theme, alertError, openColor }) {
     const url = draftUrl ?? (state.proxy_url || state.suggested_url || "");
     const themes = [
       { key: "system", label: "System" },
@@ -258,7 +257,7 @@ const Views = {
         ${error ? `<div class="muted notice">${esc(error)}</div>` : ""}
         <button class="primary-button" data-action="save-url">Save</button>
       </div></div>
-      ${this.alerts(state, alertError)}
+      ${this.alerts(state, { error: alertError, openColor })}
       <div class="card"><div class="stack">
         <span class="metric-label">Appearance</span>
         <div class="segmented" style="--segment-index:${index}"><span class="segment-thumb" aria-hidden="true"></span>${segs}</div>
@@ -267,29 +266,7 @@ const Views = {
       <div class="about">Quota by Exodus.Ai${state.version ? ` <span class="about-version">${esc(state.version)}</span>` : ""}</div>`;
   },
 
-  // Warning and critical levels (percent of the budget used) and their colors.
-  alerts(state, error) {
-    const a = state.alerts || { warning_pct: 75, warning_color: "#ffd60a", critical_pct: 90, critical_color: "#ff453a" };
-    const level = (key, label, pct, color) => `
-      <div class="alert-level">
-        <div class="alert-row">
-          <span class="alert-name"><span class="dot" style="background:${esc(color)}"></span>${label}</span>
-          <label class="alert-pct">at <input class="text-input pct-input num" id="${key}-pct" data-level="${key}" type="number" min="1" max="100" value="${pct}" /> % used</label>
-        </div>
-        <div class="swatches" role="radiogroup" aria-label="${label} color">
-          ${ALERT_SWATCHES.map(
-            (c) => `<button class="swatch ${c === color ? "selected" : ""}" data-action="alert-color" data-level="${key}" data-color="${c}" style="--swatch:${c}" aria-label="${c}" aria-pressed="${c === color}"></button>`,
-          ).join("")}
-        </div>
-      </div>`;
-    return `
-      <div class="card"><div class="stack">
-        <span class="metric-label">Alerts</span>
-        ${level("warning", "Warning", a.warning_pct, a.warning_color)}
-        ${level("critical", "Critical", a.critical_pct, a.critical_color)}
-        ${error ? `<div class="muted notice">${esc(error)}</div>` : `<div class="muted">Colors the tray icon, the budget bar and the Claude Code status line.</div>`}
-      </div></div>`;
-  },
+  // Settings → Alerts: see alerts.js (Views.alerts).
 
   // --- Sign-in flow --------------------------------------------------------
 

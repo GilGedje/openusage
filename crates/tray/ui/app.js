@@ -109,7 +109,7 @@ function applyAlertColors(alerts) {
 }
 
 async function saveAlerts(change) {
-  const a = { ...state.alerts, ...change };
+  const a = { ...(state.alerts || ALERT_DEFAULTS), ...change };
   try {
     state = await invoke("save_alerts", {
       warningPct: a.warning_pct,
@@ -118,6 +118,7 @@ async function saveAlerts(change) {
       criticalColor: a.critical_color,
     });
     if (settings) settings.alertError = null;
+    applyAlertColors(state.alerts);
   } catch (e) {
     if (settings) settings.alertError = String(e);
   }
@@ -153,6 +154,10 @@ function render(hint = null, prev = {}) {
   const typing = document.activeElement && document.activeElement.classList.contains("text-input");
   const name = viewName();
   if (typing && name === shownView && (name === "settings" || name === "signin")) return;
+  // Nor under a thumb being dragged, or while an alert change is still animating (retried after).
+  if (name === "settings" && shownView === "settings" && AlertControls.held(() => render())) return;
+  // Keep keyboard focus across the rebuild (e.g. on a slider thumb after its value saved).
+  const focused = app.contains(document.activeElement) && document.activeElement.id;
 
   applyAlertColors(state.alerts);
   Views.currentAlerts = state.alerts;
@@ -165,6 +170,8 @@ function render(hint = null, prev = {}) {
   }[name]();
   app.innerHTML = `<div class="view">${html}</div>`;
   const view = app.firstElementChild;
+  if (name === "settings") AlertControls.mounted(state);
+  if (focused && name === shownView) document.getElementById(focused)?.focus({ preventScroll: true });
 
   let transition = null;
   if (shownView !== null && name !== shownView) {
@@ -177,7 +184,12 @@ function render(hint = null, prev = {}) {
   if (hint === "period") Motion.slideThumb(view.querySelector(".cost-card .segmented"), prev.index);
   if (hint === "theme") Motion.slideThumb(view.querySelector(".segmented"), prev.index);
   shownView = name;
-  requestAnimationFrame(() => invoke("fit_height", { height: document.body.scrollHeight }));
+  requestAnimationFrame(() => fitHeight());
+}
+
+// Sizes the window to the panel; `extra` makes room first for something about to grow in.
+function fitHeight(extra = 0) {
+  invoke("fit_height", { height: document.body.scrollHeight + extra });
 }
 
 const PERIOD_KEYS = ["today", "yesterday", "30d"];
@@ -244,10 +256,10 @@ async function act(action, el) {
       }
       break;
     }
-    case "alert-color": {
-      const level = el.dataset.level;
-      return saveAlerts({ [`${level}_color`]: el.dataset.color });
-    }
+    case "alert-disclose":
+      return AlertControls.disclose(el);
+    case "alert-color":
+      return AlertControls.pick(el);
     case "theme": {
       const index = THEME_KEYS.indexOf(theme);
       theme = el.dataset.theme;
@@ -289,12 +301,11 @@ app.addEventListener("input", (e) => {
   if (e.target.id === "proxy-url") draftUrl = e.target.value;
 });
 
-// Alert percentages save when the field is committed (Enter or leaving it), not on every keystroke.
-app.addEventListener("change", (e) => {
-  if (!e.target.classList.contains("pct-input")) return;
-  const value = Math.round(Number(e.target.value));
-  e.target.blur();
-  saveAlerts({ [`${e.target.dataset.level}_pct`]: value });
+AlertControls.attach(app, {
+  save: saveAlerts,
+  fit: fitHeight,
+  // Which level's colors are open survives re-renders.
+  disclosed: (level) => settings && (settings.openColor = level),
 });
 
 app.addEventListener("keydown", (e) => {

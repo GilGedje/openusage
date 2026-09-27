@@ -78,6 +78,7 @@ STUB = r"""
             if (!(a.warning_pct >= 1 && a.critical_pct <= 100)) throw "Alert levels must be between 1% and 100%.";
             if (a.warning_pct >= a.critical_pct) throw "The warning level must be below the critical level.";
             state.alerts = a;
+            setTimeout(() => emit("state", state)); // like the app's publish: a rebuild follows every save
             return state;
           }
           case "start_login":
@@ -162,9 +163,9 @@ body.demo-page { margin: 0; padding-inline: 16px; padding-block: 28px 40px; colo
 def main() -> None:
     out = pathlib.Path(sys.argv[1])
     icon = "data:image/png;base64," + base64.b64encode((UI / "claude.png").read_bytes()).decode()
-    css = (ROOT / "design/theme.css").read_text() + (UI / "panel.css").read_text() + PAGE_CSS
+    css = (ROOT / "design/theme.css").read_text() + (UI / "panel.css").read_text() + (UI / "alerts.css").read_text() + PAGE_CSS
     views = (UI / "views.js").read_text().replace('src="claude.png"', f'src="{icon}"')
-    scripts = "\n".join([STUB, (UI / "format.js").read_text(), views, (UI / "share.js").read_text(), (UI / "app.js").read_text()])
+    scripts = "\n".join([STUB, (UI / "format.js").read_text(), views, (UI / "alerts.js").read_text(), (UI / "share.js").read_text(), (UI / "app.js").read_text()])
     scripts += r"""
 window.addEventListener("demo-export", (e) => {
   const box = document.getElementById("export");

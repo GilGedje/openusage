@@ -564,7 +564,7 @@ button {
 }
 
 .row-button.destructive {
-  color: var(--meter-critical);
+  color: var(--destructive);
 }
 
 /* Export confirmation */
@@ -676,66 +676,4 @@ button {
 
 .usage-tokens {
   color: var(--text-secondary);
-}
-
-/* Settings → Alerts */
-.alert-level {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.alert-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: var(--font-supporting);
-}
-
-.alert-name {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-weight: 600;
-}
-
-.alert-pct {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--text-secondary);
-}
-
-.pct-input {
-  width: 52px;
-  padding: 4px 6px;
-  text-align: right;
-}
-
-.swatches {
-  display: flex;
-  gap: 8px;
-}
-
-.swatch {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--swatch);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
-  transition: transform 100ms ease-out, box-shadow 150ms ease;
-}
-
-.swatch.selected {
-  box-shadow: 0 0 0 2px var(--tray), 0 0 0 4px var(--swatch);
-}
-
-.swatch:active {
-  transform: scale(0.9);
-}
-
-.swatch:focus-visible {
-  outline: 2px solid var(--meter-normal);
-  outline-offset: 3px;
 }

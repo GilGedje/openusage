@@ -42,6 +42,8 @@
   /* Segmented control */
   --segment-track: rgba(0, 0, 0, 0.07);
   --segment-selected: #ffffff;
+  --knob: #ffffff;                          /* slider thumb */
+  --destructive: #ff3b30;                   /* Sign Out (not the user's alert color) */
 
   /* Inline tints */
   --notice: #ff9500;                        /* warnings, errors, limits */
@@ -113,6 +115,8 @@
     --series-other: rgba(255, 255, 255, 0.22);
     --segment-track: rgba(255, 255, 255, 0.08);
     --segment-selected: #1c1c1e;
+    --knob: #d8d8dc;
+    --destructive: #ff453a;
   }
 }
 
@@ -144,6 +148,8 @@
   --series-other: rgba(255, 255, 255, 0.22);
   --segment-track: rgba(255, 255, 255, 0.08);
   --segment-selected: #1c1c1e;
+  --knob: #d8d8dc;
+  --destructive: #ff453a;
 }
 
 /* Base */
