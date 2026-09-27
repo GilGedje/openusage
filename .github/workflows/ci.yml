@@ -26,6 +26,13 @@ jobs:
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
       - run: cargo build --release
+      # ccline.exe with the Visual C++ runtime linked in, so it needs no vcruntime140.dll on the
+      # machine (the tray already links it statically through Tauri).
+      - name: Self-contained ccline.exe
+        if: runner.os == 'Windows'
+        env:
+          RUSTFLAGS: "-C target-feature=+crt-static"
+        run: cargo build --release -p ccline --target-dir target/static
       - uses: actions/upload-artifact@v4
         with:
           name: ccline-${{ matrix.os }}
@@ -34,4 +41,5 @@ jobs:
             target/release/ccline.exe
             target/release/litellm-usage
             target/release/litellm-usage.exe
+            target/static/release/ccline.exe
           if-no-files-found: error
