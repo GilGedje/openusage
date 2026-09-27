@@ -1,4 +1,5 @@
-FROM ubuntu:24.04
+ARG UBUNTU=24.04
+FROM ubuntu:${UBUNTU}
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -qq && apt-get install -y -qq \
       xvfb xfce4-panel xfwm4 xfdesktop4 xfce4-settings dbus-x11 gnome-keyring libsecret-tools \

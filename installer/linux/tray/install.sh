@@ -1,13 +1,14 @@
 #!/usr/bin/env sh
 # LiteLLM Usage tray app — offline installer for Ubuntu. Run from this folder as the user (not sudo):
 #   ./install.sh
+# Everything it needs is in this folder: the app and all its libraries. Nothing is downloaded.
 # The panel opens when it's done; sign in there with your company SSO.
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 
 case "${1:-}" in
-  -h | --help) sed -n '2,4p' "$0"; exit 0 ;;
+  -h | --help) sed -n '2,5p' "$0"; exit 0 ;;
   "") ;;
   *) echo "Unknown option: $1" >&2; exit 2 ;;
 esac
@@ -25,20 +26,38 @@ case "$LITELLM_URL$STATUS_URL" in
 esac
 [ -n "$LITELLM_URL" ] || fail "LITELLM_URL is empty in install.conf."
 
-# --- Bundle checks -----------------------------------------------------------
-[ "$(uname -s)" = "Linux" ] || fail "This installer is for Ubuntu/Linux."
-BUNDLE_ARCH=$(cat "$HERE/ARCH" 2>/dev/null || echo unknown)
-[ "$(uname -m)" = "$BUNDLE_ARCH" ] || fail "This folder is for $BUNDLE_ARCH, but this machine is $(uname -m)."
+# --- This folder must match this machine ---------------------------------------
+[ "$(uname -s)" = "Linux" ] || fail "This installer is for Ubuntu."
+FOLDER_ARCH=$(cat "$HERE/ARCH" 2>/dev/null || echo unknown)
+[ "$(uname -m)" = "$FOLDER_ARCH" ] || fail "This folder is for $FOLDER_ARCH, but this machine is $(uname -m)."
+FOLDER_UBUNTU=$(cat "$HERE/UBUNTU" 2>/dev/null || echo unknown)
+# shellcheck disable=SC1091
+. /etc/os-release
+[ "${VERSION_ID:-}" = "$FOLDER_UBUNTU" ] ||
+  fail "This folder is for Ubuntu $FOLDER_UBUNTU, but this machine runs ${PRETTY_NAME:-something else}. Use the folder for your Ubuntu version."
+
 say "Checking files"
 (cd "$HERE" && sha256sum --quiet -c SHA256SUMS) || fail "Checksum mismatch: the folder is damaged or was changed."
 
-# --- Install -------------------------------------------------------------------
-DEB=$(ls "$HERE"/*.deb 2>/dev/null | head -n 1 || true)
-[ -n "$DEB" ] || fail "No .deb package in this folder."
-say "Installing the tray app (asks for your password)"
+# --- Install from the packages in this folder only -----------------------------
+# A throwaway apt setup that sees only ./packages: the machine's own apt sources and state are left
+# untouched, nothing is downloaded, and apt installs only what's missing or too old.
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
-# apt takes the app's libraries (WebKitGTK, AppIndicator) from your configured, internal mirror.
-$SUDO apt-get install -y "$DEB" || fail "Couldn't install the tray app. Its libraries (WebKitGTK 4.1, AppIndicator) must be available from your apt mirror."
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+mkdir -p "$TMP/lists/partial" "$TMP/cache/archives/partial"
+echo "deb [trusted=yes] file:$HERE/packages ./" > "$TMP/sources.list"
+APT_OPTS="-o Dir::Etc::SourceList=$TMP/sources.list -o Dir::Etc::SourceParts=/dev/null \
+  -o Dir::State::Lists=$TMP/lists -o Dir::Cache=$TMP/cache -o APT::Sandbox::User=root \
+  -o Acquire::Languages=none"
+APP_PKG=$(cat "$HERE/APP_PACKAGE")
+
+say "Installing the tray app and its libraries from this folder (asks for your password)"
+# shellcheck disable=SC2086
+$SUDO apt-get $APT_OPTS -qq update || fail "Couldn't read the packages in this folder."
+# shellcheck disable=SC2086
+$SUDO env DEBIAN_FRONTEND=noninteractive apt-get $APT_OPTS install -y --no-remove "$APP_PKG" ||
+  fail "Couldn't install the tray app from this folder. Nothing was removed; see the messages above."
 
 say "Saving your LiteLLM and status page addresses"
 litellm-usage --configure --url "$LITELLM_URL" --status-url "$STATUS_URL"

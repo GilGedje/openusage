@@ -1,6 +1,8 @@
 [workspace]
 resolver = "3"
 members = ["crates/usage-core", "crates/ccline", "crates/tray"]
+# Tauri 1 tray for Ubuntu 20.04: its own workspace (Tauri 1 and 2 GTK/WebKit bindings can't share one build).
+exclude = ["crates/tray-legacy"]
 
 [workspace.package]
 edition = "2024"

@@ -1,42 +1,65 @@
 #!/usr/bin/env sh
-# Assembles the two offline Ubuntu folders. Run after building ccline (release) and the tray .deb:
-#   installer/linux/make-bundle.sh <ccline binary> <tray .deb> <output dir>
-# Produces, each with its own installer, settings and checksums, plus a .tar.gz of each:
-#   <output dir>/ccline-ubuntu-<arch>/
-#   <output dir>/litellm-usage-tray-ubuntu-<arch>/
+# Assembles the offline Ubuntu installer folders (each with its installer, settings, checksums, and
+# a .tar.gz of the folder):
+#
+#   make-bundle.sh ccline <ccline binary> <output dir>
+#       -> ccline-ubuntu-<arch>/                      (runs on Ubuntu 20.04 and newer)
+#
+#   make-bundle.sh tray <ubuntu version> <packages dir from fetch-deps.sh> <output dir>
+#       -> litellm-usage-tray-ubuntu-<version>-<arch>/ (the app + every library it needs)
 set -eu
 
-CCLINE=$1
-DEB=$2
-OUT=$3
 HERE=$(cd "$(dirname "$0")" && pwd)
 ARCH=$(uname -m)
-mkdir -p "$OUT"
 
-# folder name, source dir, payload files...
-pack() {
-  NAME=$1
+finish() {
+  DIR=$1
+  (cd "$DIR" && find . -type f ! -name SHA256SUMS ! -name install.conf | sed 's|^\./||' | sort |
+    xargs sha256sum > SHA256SUMS)
+  tar -C "$(dirname "$DIR")" -czf "$DIR.tar.gz" "$(basename "$DIR")"
+  echo "$DIR.tar.gz ($(du -sh "$DIR.tar.gz" | cut -f1))"
+}
+
+start() {
+  DIR=$1
   SRC=$2
-  shift 2
-  DIR="$OUT/$NAME"
   rm -rf "$DIR"
   mkdir -p "$DIR"
   cp "$SRC/install.sh" "$SRC/install.conf" "$SRC/README.txt" "$DIR/"
   chmod 755 "$DIR/install.sh"
   echo "$ARCH" > "$DIR/ARCH"
-  for f in "$@"; do cp "$f" "$DIR/"; done
-  (cd "$DIR" && sha256sum $(ls | grep -v -e '^SHA256SUMS$' -e '^install.conf$') > SHA256SUMS)
-  tar -C "$OUT" -czf "$OUT/$NAME.tar.gz" "$NAME"
-  echo "$OUT/$NAME.tar.gz"
 }
 
-# Stable .deb file name without spaces: litellm-usage_<version>_<arch>.deb
-DEB_NAME="litellm-usage_$(dpkg-deb -f "$DEB" Version)_$(dpkg-deb -f "$DEB" Architecture).deb"
-TMP=$(mktemp -d)
-cp "$DEB" "$TMP/$DEB_NAME"
-cp "$CCLINE" "$TMP/ccline"
-chmod 755 "$TMP/ccline"
-
-pack "ccline-ubuntu-$ARCH" "$HERE/ccline" "$TMP/ccline"
-pack "litellm-usage-tray-ubuntu-$ARCH" "$HERE/tray" "$TMP/$DEB_NAME"
-rm -rf "$TMP"
+case "$1" in
+  ccline)
+    OUT=$3
+    mkdir -p "$OUT"
+    DIR="$OUT/ccline-ubuntu-$ARCH"
+    start "$DIR" "$HERE/ccline"
+    cp "$2" "$DIR/ccline"
+    chmod 755 "$DIR/ccline"
+    finish "$DIR"
+    ;;
+  tray)
+    UBUNTU=$2
+    PACKAGES=$3
+    OUT=$4
+    mkdir -p "$OUT"
+    DIR="$OUT/litellm-usage-tray-ubuntu-$UBUNTU-$ARCH"
+    start "$DIR" "$HERE/tray"
+    echo "$UBUNTU" > "$DIR/UBUNTU"
+    cp -R "$PACKAGES" "$DIR/packages"
+    # The app's own package name, from its .deb (the one with the litellm-usage binary).
+    for deb in "$DIR"/packages/*.deb; do
+      if dpkg-deb -c "$deb" | grep -q 'usr/bin/litellm-usage$'; then
+        dpkg-deb -f "$deb" Package > "$DIR/APP_PACKAGE"
+      fi
+    done
+    [ -s "$DIR/APP_PACKAGE" ] || { echo "No tray app .deb in $PACKAGES" >&2; exit 1; }
+    finish "$DIR"
+    ;;
+  *)
+    sed -n '2,10p' "$0"
+    exit 2
+    ;;
+esac

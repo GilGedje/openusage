@@ -1,10 +1,11 @@
 LiteLLM Usage tray app for Ubuntu — offline installer
 
 What's inside
-  litellm-usage_*.deb   The tray app
+  packages/             The tray app and every library it needs (a small local apt repository)
   install.sh            Installer (run as the user, not with sudo)
   install.conf          Settings: your LiteLLM and status page addresses
-  SHA256SUMS, ARCH      Integrity check and CPU type
+  UBUNTU, ARCH          The Ubuntu version and CPU this folder is for
+  SHA256SUMS            Integrity check
 
 For the admin, once
   Edit install.conf: set LITELLM_URL and STATUS_URL (or leave STATUS_URL empty), then hand the
@@ -18,8 +19,9 @@ For each user
   for the details.
 
 Requirements
-  Ubuntu 22.04 or 24.04 desktop. The app's libraries (WebKitGTK 4.1, GTK 3, AppIndicator) come
-  from your apt mirror; a standard Ubuntu desktop already has most of them.
+  The Ubuntu desktop version named in the UBUNTU file (there's one folder per version) and the CPU
+  in ARCH. Nothing else: all libraries are in packages/. The installer installs only the ones the
+  machine is missing, never removes anything, and doesn't touch the machine's apt sources.
   Nothing is downloaded from the internet. The app only talks to the addresses in install.conf.
 
 Also available: the ccline folder adds usage to Claude Code's status line. Both share one sign-in.

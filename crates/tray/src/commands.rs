@@ -3,7 +3,9 @@
 use tauri::{AppHandle, WebviewWindow};
 use usage_core::{account, log, refresh};
 
-use crate::state::{self, PanelState};
+use usage_core::panel::PanelState;
+
+use crate::state;
 
 #[tauri::command]
 pub fn get_state() -> PanelState {

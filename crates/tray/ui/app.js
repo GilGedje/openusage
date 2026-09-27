@@ -1,6 +1,7 @@
 // Panel controller: holds the current view, talks to the Rust side, re-renders on events.
 
-const { invoke } = window.__TAURI__.core;
+// Tauri 2 exposes invoke under `core`, Tauri 1 (the Ubuntu 20.04 build) under `tauri`.
+const { invoke } = window.__TAURI__.core || window.__TAURI__.tauri;
 const { listen } = window.__TAURI__.event;
 
 const app = document.getElementById("app");

@@ -1,0 +1,48 @@
+{
+  "build": {
+    "distDir": "../tray/ui",
+    "devPath": "../tray/ui",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "litellm-usage",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false
+    },
+    "bundle": {
+      "active": true,
+      "targets": ["deb"],
+      "identifier": "io.github.gilgedje.litellm-usage",
+      "category": "Utility",
+      "shortDescription": "LiteLLM budget and usage in your tray",
+      "icon": ["../tray/icons/32x32.png", "../tray/icons/128x128.png", "../tray/icons/128x128@2x.png", "../tray/icons/icon.png"],
+      "deb": {
+        "depends": ["libayatana-appindicator3-1"]
+      }
+    },
+    "systemTray": {
+      "iconPath": "../tray/icons/32x32.png",
+      "iconAsTemplate": false
+    },
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    },
+    "windows": [
+      {
+        "label": "panel",
+        "title": "LiteLLM Usage",
+        "url": "index.html",
+        "width": 320,
+        "height": 420,
+        "resizable": false,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false
+      }
+    ]
+  }
+}
