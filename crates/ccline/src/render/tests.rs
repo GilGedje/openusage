@@ -25,6 +25,16 @@ fn cache(snapshot: Option<Snapshot>, error: Option<&str>) -> CacheFile {
     }
 }
 
+fn session(pct: Option<f64>) -> Session {
+    Session {
+        model_id: Some("sonnet".into()),
+        model_name: Some("Sonnet 4.6".into()),
+        context_pct: pct,
+        context_tokens: pct.map(|p| (p * 2_000.0) as u64),
+        context_size: pct.map(|_| 200_000),
+    }
+}
+
 fn plain(s: &str) -> String {
     let mut out = String::new();
     let mut esc = false;
@@ -39,59 +49,75 @@ fn plain(s: &str) -> String {
     out
 }
 
+fn render(s: &Session, c: &CacheFile, columns: usize) -> String {
+    plain(&line(s, Usage::Cached(Some(c)), NOW, columns))
+}
+
 #[test]
 fn full_line() {
     let c = cache(Some(snap(12.4, Some(50.0))), None);
     assert_eq!(
-        plain(&line(Some(&c), Some("sonnet"), NOW, 200)),
-        "▰▱▱▱▱ $12.40/$50.00 25% · resets 4d · today $1.20 · sonnet $8.10/30d"
+        render(&session(Some(42.0)), &c, 200),
+        "Sonnet 4.6 · ctx 42% 84k/200k · ▰▱▱▱▱ $12.40/$50.00 25% · today $1.20 · resets 4d · $8.10 this model/30d"
     );
 }
 
 #[test]
-fn colors_by_budget_used() {
-    let blue = line(Some(&cache(Some(snap(10.0, Some(50.0))), None)), None, NOW, 200);
-    let yellow = line(Some(&cache(Some(snap(40.0, Some(50.0))), None)), None, NOW, 200);
-    let red = line(Some(&cache(Some(snap(46.0, Some(50.0))), None)), None, NOW, 200);
-    assert!(blue.starts_with(BLUE));
-    assert!(yellow.starts_with(YELLOW));
-    assert!(red.starts_with(RED));
+fn colors_by_fraction_used() {
+    let at = |spend: f64| line(&Session::default(), Usage::Cached(Some(&cache(Some(snap(spend, Some(50.0))), None))), NOW, 200);
+    assert!(at(10.0).starts_with(BLUE));
+    assert!(at(40.0).starts_with(YELLOW));
+    assert!(at(46.0).starts_with(RED));
+    let ctx = line(&session(Some(92.0)), Usage::NotConfigured, NOW, 200);
+    assert!(ctx.contains(&format!("ctx {RED}92%")), "{ctx}");
 }
 
 #[test]
 fn no_limit_and_unknown_model() {
-    let c = cache(Some(snap(3.0, None)), None);
-    assert_eq!(plain(&line(Some(&c), Some("opus"), NOW, 200)), "$3.00 spent · no limit · resets 4d · today $1.20");
+    let s = Session { model_id: Some("opus".into()), ..Session::default() };
+    assert_eq!(render(&s, &cache(Some(snap(3.0, None)), None), 200), "opus · $3.00 spent · no limit · today $1.20 · resets 4d");
 }
 
 #[test]
 fn narrow_terminal_drops_low_priority_segments() {
     let c = cache(Some(snap(12.4, Some(50.0))), None);
-    assert_eq!(plain(&line(Some(&c), Some("sonnet"), NOW, 40)), "▰▱▱▱▱ $12.40/$50.00 25% · today $1.20");
+    let s = session(Some(42.0));
+    assert_eq!(render(&s, &c, 70), "Sonnet 4.6 · ctx 42% 84k/200k · ▰▱▱▱▱ $12.40/$50.00 25% · today $1.20");
+    assert_eq!(render(&s, &c, 60), "Sonnet 4.6 · ctx 42% 84k/200k · ▰▱▱▱▱ $12.40/$50.00 25%");
+    assert_eq!(render(&s, &c, 40), "Sonnet 4.6 · ▰▱▱▱▱ $12.40/$50.00 25%");
+    assert_eq!(render(&s, &c, 30), "▰▱▱▱▱ $12.40/$50.00 25%");
+}
+
+#[test]
+fn context_before_first_response_is_hidden() {
+    let c = cache(Some(snap(12.4, Some(50.0))), None);
+    assert!(render(&session(None), &c, 200).starts_with("Sonnet 4.6 · ▰"));
 }
 
 #[test]
 fn stale_data_shows_age() {
-    let c = cache(Some(snap(12.4, Some(50.0))), Some("network"));
-    let out = plain(&line(Some(&c), None, NOW, 200));
+    let out = render(&Session::default(), &cache(Some(snap(12.4, Some(50.0))), Some("network")), 200);
     assert!(out.ends_with("⚠ can't reach proxy · 30s old"), "{out}");
 }
 
 #[test]
-fn signed_out_and_empty_states() {
-    let c = cache(Some(snap(1.0, Some(50.0))), Some("signed_out"));
-    assert_eq!(plain(&line(Some(&c), None, NOW, 200)), "LiteLLM: signed out · run `ccline login`");
-    assert_eq!(plain(&line(None, None, NOW, 200)), "LiteLLM · loading…");
-    assert_eq!(plain(&line(Some(&cache(None, Some("keyring"))), None, NOW, 200)), "LiteLLM: secure storage unavailable");
+fn session_info_shows_in_every_state() {
+    let s = session(Some(42.0));
+    assert_eq!(render(&s, &cache(Some(snap(1.0, Some(50.0))), Some("signed_out")), 200), "Sonnet 4.6 · ctx 42% 84k/200k · LiteLLM: signed out · run `ccline login`");
+    assert_eq!(plain(&line(&s, Usage::Cached(None), NOW, 200)), "Sonnet 4.6 · ctx 42% 84k/200k · LiteLLM · loading…");
+    assert_eq!(plain(&line(&s, Usage::NotConfigured, NOW, 200)), "Sonnet 4.6 · ctx 42% 84k/200k · LiteLLM: run `ccline login` to sign in");
+    assert_eq!(render(&Session::default(), &cache(None, Some("keyring")), 200), "LiteLLM: secure storage unavailable");
 }
 
 #[test]
-fn formats_money_and_durations() {
+fn formats_money_tokens_and_durations() {
     assert_eq!(money(0.0), "$0.00");
     assert_eq!(money(0.004), "<$0.01");
     assert_eq!(money(1234.5), "$1234");
     assert_eq!(duration(59), "59s");
     assert_eq!(duration(3 * 3600), "3h");
     assert_eq!(duration(5 * 86_400), "5d");
-    assert_eq!(tokens(1_234), "1.2k");
+    assert_eq!(tokens(84_000), "84k");
+    assert_eq!(tokens(1_000_000), "1M");
+    assert_eq!(tokens(14_300_000), "14.3M");
 }

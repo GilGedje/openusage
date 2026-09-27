@@ -3,17 +3,22 @@
 Shows your LiteLLM budget and usage at the bottom of Claude Code:
 
 ```
-▰▰▰▱▱ $31.26/$50.00 63% · resets 3d · today $0.00 · claude-3-5-sonnet $15.83/30d
+Sonnet 3.5 · ctx 42% 84k/200k · ▰▰▰▱▱ $31.26/$50.00 63% · today $0.00 · resets 3d · $15.83 this model/30d
 ```
 
+- **Model** — the model Claude Code is using right now.
+- **ctx** — how full this conversation's context window is, with tokens used and the window size.
+  Blue below 75%, yellow from 75%, red from 90%. Appears after Claude's first reply.
 - **Budget meter** — spend in the current budget window against your limit. Blue below 75%, yellow from
   75%, red from 90%. Without a limit it reads `$12.40 spent · no limit`.
-- **resets** — time until the budget window resets.
 - **today** — today's spend.
-- **Current model** — what the model Claude Code is using has cost over the last 30 days (shown when
-  LiteLLM has usage under that exact model name).
+- **resets** — time until the budget window resets.
+- **this model/30d** — what the current model has cost you over the last 30 days (shown when LiteLLM
+  has usage under that exact model name).
 
-When the terminal is narrow, the least important parts drop off first (model, then reset, then today).
+The model and context parts come from Claude Code itself, so they show even while LiteLLM is signed
+out or loading. When the terminal is narrow, parts drop off in this order: this model's spend, reset,
+today, context, model name — the budget stays.
 
 ## Setup
 

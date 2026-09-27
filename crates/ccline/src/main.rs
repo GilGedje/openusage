@@ -7,6 +7,7 @@
 mod account;
 mod refresh;
 mod render;
+mod session;
 
 use std::io::{IsTerminal, Read};
 use std::process::ExitCode;
@@ -72,27 +73,26 @@ fn url_flag(args: &[String]) -> Option<String> {
 }
 
 fn status_line() {
-    let input = read_stdin();
+    let session = read_stdin().map(|v| session::Session::from_input(&v)).unwrap_or_default();
     let columns = std::env::var("COLUMNS").ok().and_then(|c| c.parse().ok()).unwrap_or(120);
+    let now = usage_core::now();
     let config = match Config::load() {
         Ok(c) => c,
         Err(e) => {
             log::error("config", &e.to_string());
-            println!("{}", render::message(&e.to_string(), columns));
+            println!("{}", render::line(&session, render::Usage::Failed("settings file unreadable"), now, columns));
             return;
         }
     };
     let Some(proxy_url) = config.proxy_url else {
-        println!("{}", render::not_configured(columns));
+        println!("{}", render::line(&session, render::Usage::NotConfigured, now, columns));
         return;
     };
     let cached = cache::read().filter(|c| c.proxy_url == proxy_url);
-    let now = usage_core::now();
     if cached.as_ref().is_none_or(|c| now - c.last_attempt >= refresh::REFRESH_SECS) {
         refresh::spawn_detached();
     }
-    let model = input.as_ref().and_then(render::current_model);
-    println!("{}", render::line(cached.as_ref(), model.as_deref(), now, columns));
+    println!("{}", render::line(&session, render::Usage::Cached(cached.as_ref()), now, columns));
 }
 
 /// Claude Code pipes session JSON on stdin; skip reading when run by hand in a terminal.

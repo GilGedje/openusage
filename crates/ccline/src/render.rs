@@ -1,78 +1,110 @@
-//! Text for the status line and `ccline status`. Pure functions of the cache, so it's all testable.
-//! Colors follow design/theme.css (dark values, which read well on both terminal backgrounds).
+//! Text for the status line and `ccline status`. Pure functions of the session and cache, so it's
+//! all testable. Colors follow design/theme.css (dark values, which read well on both backgrounds).
 
 use usage_core::cache::CacheFile;
 use usage_core::snapshot::Snapshot;
+
+use crate::session::Session;
 
 const BLUE: &str = "\x1b[38;2;10;132;255m";
 const YELLOW: &str = "\x1b[38;2;255;214;10m";
 const RED: &str = "\x1b[38;2;255;69;58m";
 const ORANGE: &str = "\x1b[38;2;255;159;10m";
+const BOLD: &str = "\x1b[1m";
 const DIM: &str = "\x1b[2m";
 const RESET: &str = "\x1b[0m";
 
 const BAR_CELLS: usize = 5;
-/// Budget used at or above these fractions turns the meter yellow / red.
+/// Budget or context used at or above these fractions turns yellow / red.
 const WARNING_AT: f64 = 0.75;
 const CRITICAL_AT: f64 = 0.90;
 
-/// The model Claude Code is using, from the session JSON on stdin.
-pub fn current_model(input: &serde_json::Value) -> Option<String> {
-    input.pointer("/model/id").and_then(|v| v.as_str()).map(str::to_string)
+/// Where the LiteLLM side of the line stands.
+pub enum Usage<'a> {
+    NotConfigured,
+    Failed(&'a str),
+    Cached(Option<&'a CacheFile>),
 }
 
-pub fn not_configured(columns: usize) -> String {
-    message("LiteLLM: run `ccline login` to sign in", columns)
+/// The status line: `Model · ctx 42% 84k/200k · ▰▰▰▱▱ $31.26/$50.00 63% · today $0.00 · resets 3d · $15.83/30d`.
+/// When the terminal is narrow, the highest priority numbers are dropped first.
+pub fn line(session: &Session, usage: Usage, now: i64, columns: usize) -> String {
+    let mut segs: Vec<(u8, String)> = Vec::new();
+    if let Some(model) = session.display_model() {
+        segs.push((1, format!("{BOLD}{model}{RESET}")));
+    }
+    if let Some(ctx) = context_segment(session) {
+        segs.push((1, ctx));
+    }
+    match usage {
+        Usage::NotConfigured => segs.push((0, orange("LiteLLM: run `ccline login` to sign in"))),
+        Usage::Failed(msg) => segs.push((0, orange(&format!("LiteLLM: {msg}")))),
+        Usage::Cached(None) => segs.push((0, format!("{DIM}LiteLLM · loading…{RESET}"))),
+        Usage::Cached(Some(cache)) => usage_segments(&mut segs, session, cache, now),
+    }
+    fit(segs, columns)
 }
 
-pub fn message(text: &str, columns: usize) -> String {
-    fit(vec![(0, format!("{ORANGE}{text}{RESET}"))], columns)
-}
-
-pub fn line(cache: Option<&CacheFile>, model: Option<&str>, now: i64, columns: usize) -> String {
-    let Some(cache) = cache else {
-        return fit(vec![(0, format!("{DIM}LiteLLM · loading…{RESET}"))], columns);
-    };
+fn usage_segments(segs: &mut Vec<(u8, String)>, session: &Session, cache: &CacheFile, now: i64) {
     if cache.error.as_ref().is_some_and(|e| e.is_signed_out()) {
-        return message("LiteLLM: signed out · run `ccline login`", columns);
+        return segs.push((0, orange("LiteLLM: signed out · run `ccline login`")));
     }
     let Some(snap) = &cache.snapshot else {
         let kind = cache.error.as_ref().map(|e| e.kind.as_str()).unwrap_or("");
-        return message(&format!("LiteLLM: {}", short_error(kind)), columns);
+        return segs.push((0, orange(&format!("LiteLLM: {}", short_error(kind)))));
     };
-
-    // (priority, text): lower priority numbers survive longer when the terminal is narrow.
-    let mut segs: Vec<(u8, String)> = vec![(0, budget_segment(snap))];
+    segs.push((0, budget_segment(snap)));
+    segs.push((2, format!("today {}", money(snap.today.spend))));
     if let Some(reset) = snap.budget.reset_at.filter(|r| *r > now) {
         segs.push((3, format!("{DIM}resets {}{RESET}", duration(reset - now))));
     }
-    segs.push((2, format!("today {}", money(snap.today.spend))));
-    if let Some(m) = model.and_then(|id| snap.models.iter().find(|m| m.name.eq_ignore_ascii_case(id))) {
-        segs.push((4, format!("{} {}{DIM}/30d{RESET}", m.name, money(m.totals.spend))));
+    let model_usage = session
+        .model_id
+        .as_deref()
+        .and_then(|id| snap.models.iter().find(|m| m.name.eq_ignore_ascii_case(id)));
+    if let Some(m) = model_usage {
+        segs.push((4, format!("{} {DIM}this model/30d{RESET}", money(m.totals.spend))));
     }
     if let Some(err) = &cache.error {
-        segs.push((1, format!("{ORANGE}⚠ {} · {} old{RESET}", short_error(&err.kind), duration(now - snap.fetched_at))));
+        segs.push((1, orange(&format!("⚠ {} · {} old", short_error(&err.kind), duration(now - snap.fetched_at)))));
     }
-    fit(segs, columns)
+}
+
+fn context_segment(session: &Session) -> Option<String> {
+    let pct = session.context_pct?;
+    let color = severity_color(pct / 100.0);
+    let size = match (session.context_tokens, session.context_size) {
+        (Some(used), Some(size)) => format!(" {DIM}{}/{}{RESET}", tokens(used), tokens(size)),
+        _ => String::new(),
+    };
+    Some(format!("ctx {color}{pct:.0}%{RESET}{size}"))
 }
 
 fn budget_segment(snap: &Snapshot) -> String {
     let spend = money(snap.budget.spend);
     match (snap.budget.max_budget, snap.budget.used_fraction()) {
         (Some(max), Some(frac)) => {
-            let color = if frac >= CRITICAL_AT {
-                RED
-            } else if frac >= WARNING_AT {
-                YELLOW
-            } else {
-                BLUE
-            };
+            let color = severity_color(frac);
             let filled = ((frac * BAR_CELLS as f64).round() as usize).min(BAR_CELLS);
             let bar = format!("{}{}", "▰".repeat(filled), "▱".repeat(BAR_CELLS - filled));
             format!("{color}{bar}{RESET} {spend}/{} {color}{:.0}%{RESET}", money(max), frac * 100.0)
         }
         _ => format!("{spend} {DIM}spent · no limit{RESET}"),
     }
+}
+
+fn severity_color(fraction: f64) -> &'static str {
+    if fraction >= CRITICAL_AT {
+        RED
+    } else if fraction >= WARNING_AT {
+        YELLOW
+    } else {
+        BLUE
+    }
+}
+
+fn orange(text: &str) -> String {
+    format!("{ORANGE}{text}{RESET}")
 }
 
 fn short_error(kind: &str) -> &'static str {
@@ -87,6 +119,7 @@ fn short_error(kind: &str) -> &'static str {
 }
 
 /// Joins segments with a dim dot, dropping the highest-priority-number segments until it fits.
+/// Ties drop the rightmost segment first.
 fn fit(mut segs: Vec<(u8, String)>, columns: usize) -> String {
     let sep = format!(" {DIM}·{RESET} ");
     loop {
@@ -94,7 +127,7 @@ fn fit(mut segs: Vec<(u8, String)>, columns: usize) -> String {
         if visible_len(&joined) <= columns || segs.len() <= 1 {
             return joined;
         }
-        let drop = segs.iter().enumerate().max_by_key(|(_, (p, _))| *p).map(|(i, _)| i).unwrap();
+        let drop = segs.iter().enumerate().max_by_key(|(i, (p, _))| (*p, *i)).map(|(i, _)| i).unwrap();
         segs.remove(drop);
     }
 }
@@ -126,8 +159,11 @@ pub fn money(v: f64) -> String {
 fn tokens(n: u64) -> String {
     match n {
         0..1_000 => n.to_string(),
-        1_000..1_000_000 => format!("{:.1}k", n as f64 / 1e3),
-        _ => format!("{:.1}M", n as f64 / 1e6),
+        1_000..1_000_000 => format!("{}k", (n as f64 / 1e3).round()),
+        _ => {
+            let m = n as f64 / 1e6;
+            if m.fract() == 0.0 { format!("{m:.0}M") } else { format!("{m:.1}M") }
+        }
     }
 }
 
