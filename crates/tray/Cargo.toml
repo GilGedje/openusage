@@ -9,7 +9,7 @@ name = "litellm-usage"
 path = "src/main.rs"
 
 [build-dependencies]
-tauri-build = "2"
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
 open = "5.4.4"

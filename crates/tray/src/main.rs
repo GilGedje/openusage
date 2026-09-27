@@ -21,6 +21,13 @@ use crate::state::AppState;
 const TICK: Duration = Duration::from_secs(15);
 
 fn main() {
+    // WebKitGTK's DMA-BUF renderer shows a blank window in many VMs and with some GPU drivers.
+    #[cfg(target_os = "linux")]
+    if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+        // SAFETY: first thing in main, before any other thread exists.
+        unsafe { std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1") };
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_positioner::init())
         .manage(AppState::default())

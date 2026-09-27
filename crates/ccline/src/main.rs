@@ -7,6 +7,7 @@
 mod account;
 mod render;
 mod session;
+mod setup;
 mod spawn;
 
 use std::io::{IsTerminal, Read};
@@ -23,6 +24,9 @@ ccline — Claude Code status line for your LiteLLM budget and usage
 USAGE:
   ccline                    Print the status line (Claude Code runs this)
   ccline login [--url URL]  Sign in with SSO (URL defaults to ANTHROPIC_BASE_URL)
+  ccline setup [--url URL] [--status-url URL] [--force] [--no-statusline]
+                            Save the LiteLLM / status page addresses and set up
+                            Claude Code's status line (used by the installer)
   ccline logout             Sign out and forget the saved sign-in
   ccline status             Fetch now and show everything
   ccline refresh            Refresh the cache (used internally)
@@ -35,8 +39,14 @@ fn main() -> ExitCode {
             status_line();
             Ok(())
         }
-        Some("login") => account::login(url_flag(&args[1..])),
+        Some("login") => account::login(flag_value(&args[1..], "--url")),
         Some("logout") => account::logout(),
+        Some("setup") => setup::run(setup::Options {
+            url: flag_value(&args[1..], "--url"),
+            status_url: flag_value(&args[1..], "--status-url"),
+            force: args.iter().any(|a| a == "--force"),
+            no_statusline: args.iter().any(|a| a == "--no-statusline"),
+        }),
         Some("status") => account::status(),
         Some("refresh") => background_refresh(),
         Some("-h" | "--help" | "help") => {
@@ -70,13 +80,15 @@ fn background_refresh() -> usage_core::Result<()> {
     refresh::refresh_if_free().map(|_| ())
 }
 
-fn url_flag(args: &[String]) -> Option<String> {
+/// `--name value` or `--name=value`.
+fn flag_value(args: &[String], name: &str) -> Option<String> {
+    let prefix = format!("{name}=");
     let mut it = args.iter();
     while let Some(a) = it.next() {
-        if a == "--url" {
+        if a == name {
             return it.next().cloned();
         }
-        if let Some(v) = a.strip_prefix("--url=") {
+        if let Some(v) = a.strip_prefix(&prefix) {
             return Some(v.to_string());
         }
     }

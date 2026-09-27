@@ -11,8 +11,12 @@ Everything left to do, with how to build it. Tick items off here as they land.
   (`docs/ccline.md`)
 - Tray app, first version (`docs/tray.md`)
 - ccline budget links to LiteLLM's Usage page; background refresh never waits on a Keychain prompt
+- Ubuntu offline bundle: `install.sh` + `install.conf` (placeholder addresses) + `.deb` + checksums,
+  `ccline setup` (saves addresses, adds the Claude Code status line safely), Bundles workflow
+  (`docs/install.md`). Tested end to end on an Ubuntu 24.04 desktop in Docker: install, SSO sign-in,
+  tray menu → panel, light and dark (`docs/screenshots/ubuntu-*.png`)
 - CI workflow for Windows / Ubuntu / macOS (`.github/workflows/ci.yml`, not yet pushed)
-- Verified: macOS end to end; Ubuntu compiles and passes tests (Docker)
+- Verified: macOS end to end; Ubuntu end to end (Docker desktop, arm64); Windows not yet built
 
 ## Next: tray app (priority)
 
@@ -62,7 +66,9 @@ Settings edits live in the binary (not in shell scripts) so they behave the same
   remove the binary.
 - Tests: settings merge with an existing file, missing file, existing foreign status line.
 
-### 3. Install scripts (offline)
+### 3. Install scripts (offline) — Ubuntu done, Windows next
+
+- Windows: `install.ps1` + `.msi` (WebView2 offline installer is already enabled in the Tauri config).
 
 - `install.sh` (macOS, Linux) and `install.ps1` (Windows), shipped inside the bundle next to the
   binaries and a `SHA256SUMS` file.

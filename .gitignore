@@ -15,3 +15,5 @@ target/
 *.cer
 *.pfx
 .playwright-mcp/
+.ubuntu-test/
+dist/
