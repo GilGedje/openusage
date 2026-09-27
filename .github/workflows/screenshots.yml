@@ -31,18 +31,26 @@ jobs:
             New-Item -ItemType Directory -Force shots | Out-Null
             $bmp.Save("shots/$name.png", [System.Drawing.Imaging.ImageFormat]::Png)
           }
+          $shell = New-Object -ComObject Shell.Application
           $theme = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
           New-Item -Force -Path $theme | Out-Null
           foreach ($mode in @(@{n='light';v=1}, @{n='dark';v=0})) {
             Set-ItemProperty -Path $theme -Name AppsUseLightTheme -Value $mode.v -Type DWord
             Set-ItemProperty -Path $theme -Name SystemUsesLightTheme -Value $mode.v -Type DWord
+            $shell.MinimizeAll()   # the runner's console window would cover the panel
+            Start-Sleep -Seconds 2
             $env:LITELLM_USAGE_OPEN_PANEL = '1'
             $p = Start-Process -PassThru target\release\litellm-usage.exe
             Start-Sleep -Seconds 12
+            if ($p.HasExited) { Write-Host "app exited with code $($p.ExitCode)" } else { Write-Host "app running (pid $($p.Id))" }
             Shot "windows-$($mode.n)"
             Stop-Process -Id $p.Id -Force
             Start-Sleep -Seconds 2
           }
+      - name: App log
+        if: always()
+        shell: pwsh
+        run: Get-Content "$env:LOCALAPPDATA\litellm-usage\error.log" -ErrorAction SilentlyContinue
       - uses: actions/upload-artifact@v4
         with:
           name: windows-screenshots
