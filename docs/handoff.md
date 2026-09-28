@@ -36,7 +36,7 @@ remain. It is **not** OpenUsage and must not use its name or logo.
 | Links | **Dashboard** → LiteLLM's Usage page; **Status** → the org's status page (like status.claude.com) |
 | Language | **Rust** (shared core with the Tauri tray app) |
 | Certificates | Trust the org CA (system store + custom CA path); **never** disable verification |
-| Tray clicks | Left click opens the panel; right click = menu (Open, Refresh, Change LiteLLM URL…, Quit) |
+| Tray clicks | Left click opens the panel, clicking elsewhere closes it; right click = menu (Open, Refresh, Change LiteLLM URL…, Quit). On Ubuntu GNOME the left click needs our GNOME Shell extension (installer adds it) |
 | Name | Product is **Quota by Exodus.Ai** (visible names). Internal ids stay `litellm-usage` (binary, settings folder, keychain service, env vars) so existing installs keep their sign-in |
 | Versions | Never bump or tag a version without explicit owner approval |
 
@@ -162,6 +162,25 @@ libssl-dev build-essential`.
   (StatusNotifierItem via `ksni`): left click → `activate(x, y)` → panel next to the click; right
   click → menu. If the desktop has no StatusNotifierItem host, they fall back to AppIndicator (menu
   only, panel at the top right).
+- **Ubuntu's AppIndicator GNOME extension never sends Activate on a single left click** (every
+  version, 33.1 on 20.04 through 60+): single left click = menu, double click = Activate, middle click
+  = SecondaryActivate (we open the panel on that too). So `installer/linux/tray/gnome-extension/`
+  ships our own tiny GNOME Shell extension (`legacy/` for GNOME 3.36–44, `modern/` for 45+): it hooks
+  our icon's `event` signal (runs before the icon's handlers), stops left/middle presses and calls the
+  indicator's Activate **on release** — opening while the button is held gave the panel focus GTK
+  never registered, so click-away didn't close it. `install.sh` copies the right one and adds it to
+  `org.gnome.shell enabled-extensions`; GNOME loads it at the next login.
+- **mutter won't focus a window shown without a fresh X11 user timestamp** (a tray click happens in
+  the shell, not in our app), so the panel never got focus and "hide on focus lost" never fired.
+  `sni_tray::present_with_server_time` presents it with the X server's current time (GTK/GDK C
+  calls, shared by both trays). On Wayland the app sets `GDK_BACKEND=x11` (when Xwayland is there)
+  so this and panel placement work.
+- **ksni callbacks must not call `SniTray::update`** (it blocks on ksni's runtime → panic "Cannot
+  start a runtime from within a runtime", and the icon goes dead on the Tauri 2 build): sni-tray runs
+  every click/menu action on its own thread.
+- **Testing tray clicks on real GNOME**: `tools/ubuntu-test/Dockerfile.gnome` + `gnome.sh` (GNOME
+  Shell on Xvfb, X11 session) and `gnome-clicks.sh`; see tools/ubuntu-test/README.md. Wayland
+  sessions (default on 22.04+, only option on 26.04) are not covered by the harness yet.
 - **TLS**: roots = system store (`rustls-native-certs`) + optional CA file (`usage-core/src/tls.rs`);
   untrusted/name-mismatch errors map to `Error::Certificate` with fix-it text.
 - **Tauri's CLI rewrites `crates/tray/Cargo.toml`** formatting on build — harmless.

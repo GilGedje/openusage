@@ -70,6 +70,18 @@ fn main() {
         std::process::exit(commands::configure_from_args(&args[1..]));
     }
 
+    // On a Wayland session, run through XWayland: Wayland doesn't let an app place its own window
+    // (the panel goes next to the tray icon) or take focus without a token, which "click away to
+    // close" relies on (see sni_tray::present_with_server_time).
+    #[cfg(target_os = "linux")]
+    if std::env::var_os("GDK_BACKEND").is_none()
+        && std::env::var_os("WAYLAND_DISPLAY").is_some()
+        && std::env::var_os("DISPLAY").is_some()
+    {
+        // SAFETY: first thing in main, before any other thread exists.
+        unsafe { std::env::set_var("GDK_BACKEND", "x11") };
+    }
+
     let menu = SystemTrayMenu::new()
         .add_item(CustomMenuItem::new("open", "Open"))
         .add_item(CustomMenuItem::new("refresh", "Refresh"))
@@ -184,7 +196,23 @@ pub fn show(app: &AppHandle, click: Option<(i32, i32)>) {
     place(&window);
     let _ = window.show();
     let _ = window.set_focus();
+    #[cfg(target_os = "linux")]
+    focus_on_x11(&window);
     publish(app);
+}
+
+/// GNOME only focuses a window shown from a tray click if it carries a fresh user timestamp; without
+/// focus, clicking elsewhere couldn't close the panel. See `sni_tray::present_with_server_time`.
+#[cfg(target_os = "linux")]
+fn focus_on_x11(window: &tauri::Window) {
+    let w = window.clone();
+    let _ = window.run_on_main_thread(move || {
+        if let Ok(gtk_window) = w.gtk_window() {
+            use gtk::glib::ObjectType;
+            // SAFETY: a live GtkWindow, on the GTK main thread.
+            unsafe { sni_tray::present_with_server_time(gtk_window.as_ptr().cast()) };
+        }
+    });
 }
 
 /// "Change LiteLLM URL…": open the panel on its settings view.

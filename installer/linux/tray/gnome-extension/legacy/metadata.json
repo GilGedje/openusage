@@ -1,0 +1,7 @@
+{
+  "uuid": "quota-tray-click@exodus.ai",
+  "name": "Quota by Exodus.Ai: Tray Click",
+  "description": "A single left click on Quota's tray icon opens its panel (right click still shows the menu). Installed by Quota's installer; works with Ubuntu's AppIndicator support.",
+  "shell-version": ["3.36", "3.38", "40", "41", "42", "43", "44"],
+  "version": 1
+}

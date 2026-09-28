@@ -48,6 +48,7 @@ case "$1" in
     DIR="$OUT/quota-tray-ubuntu-$UBUNTU-$ARCH"
     start "$DIR" "$HERE/tray"
     echo "$UBUNTU" > "$DIR/UBUNTU"
+    cp -R "$HERE/tray/gnome-extension" "$DIR/gnome-extension"
     cp -R "$PACKAGES" "$DIR/packages"
     # The app's own package name, from its .deb (the one with the litellm-usage binary).
     for deb in "$DIR"/packages/*.deb; do

@@ -12,7 +12,7 @@ if ! command -v node >/dev/null; then
 fi
 export CARGO_TARGET_DIR=/cache/legacy-target
 cd /src/crates/tray-legacy && npx --yes @tauri-apps/cli@1 build --bundles deb 2>&1 | grep -vE '^\s*(Compiling|Downloaded|Downloading)' | tail -25
-DEB=$(ls "$CARGO_TARGET_DIR"/release/bundle/deb/*.deb | head -n 1)
+DEB=$(ls -t "$CARGO_TARGET_DIR"/release/bundle/deb/*.deb | head -n 1)  # newest: the folder keeps old builds
 mkdir -p /src/.ubuntu-test/build && cp "$DEB" /src/.ubuntu-test/build/tray-legacy.deb
 dpkg-deb -f /src/.ubuntu-test/build/tray-legacy.deb Package Version Depends
 dpkg-deb -c /src/.ubuntu-test/build/tray-legacy.deb | grep -E 'usr/bin|applications'

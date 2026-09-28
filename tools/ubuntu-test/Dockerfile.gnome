@@ -1,0 +1,12 @@
+# A real GNOME Shell (X11, on Xvfb) with Ubuntu's AppIndicator extension, for testing tray clicks the
+# way Ubuntu's own desktop handles them. Build: docker build --build-arg UBUNTU=20.04 -f Dockerfile.gnome .
+ARG UBUNTU=20.04
+FROM ubuntu:${UBUNTU}
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+      gnome-shell gnome-shell-extension-appindicator xvfb dbus-x11 gnome-keyring libsecret-tools \
+      xdotool imagemagick x11-utils sudo fonts-ubuntu adwaita-icon-theme procps mesa-utils libgl1-mesa-dri \
+      >/dev/null && rm -rf /var/lib/apt/lists/*
+RUN useradd -m -s /bin/bash demo && echo 'demo ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/demo
+USER demo
+WORKDIR /home/demo

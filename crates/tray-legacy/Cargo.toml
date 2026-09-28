@@ -20,6 +20,10 @@ tauri-plugin-positioner = { version = "1", features = ["system-tray"] }
 usage-core = { path = "../usage-core" }
 sni-tray = { path = "../sni-tray", version = "0.1.0" }
 
+# The panel's GTK window, for the X11 focus fix (already part of Tauri's build on Linux).
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.15"
+
 [profile.release]
 opt-level = "s"
 lto = true

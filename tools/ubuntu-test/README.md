@@ -60,3 +60,24 @@ strict test.
   restart the app.
 
 Clean up: `docker rm -f ubuntu-desktop`.
+
+## 5. Tray clicks on real GNOME (Ubuntu's own desktop)
+
+The Xfce desktop above doesn't show how Ubuntu's GNOME handles tray clicks (its AppIndicator
+extension turns a single left click into the menu). `Dockerfile.gnome` runs a real GNOME Shell (X11
+session on Xvfb) with that extension:
+
+```sh
+cd tools/ubuntu-test && docker build --build-arg UBUNTU=20.04 -t quota-gnome:20.04 -f Dockerfile.gnome .
+cd ../.. && docker run -d --name qg -v "$PWD":/src quota-gnome:20.04 sh -c '
+  sudo apt-get update -qq && sudo apt-get install -y -qq /src/.ubuntu-test/build/tray-legacy.deb
+  E=$HOME/.local/share/gnome-shell/extensions/quota-tray-click@exodus.ai; mkdir -p $E
+  cp /src/installer/linux/tray/gnome-extension/legacy/* $E/     # modern/ for GNOME 45+ (24.04, 26.04)
+  /src/tools/ubuntu-test/gnome.sh'
+docker exec qg sh -c '. /tmp/session.env; litellm-usage >/tmp/app.log 2>&1 &'
+docker exec qg sh /src/tools/ubuntu-test/gnome-clicks.sh 1312      # the icon's x (20.04: 1312)
+```
+
+Screenshots: `import` shows black under GNOME's compositor; use the Shell's screenshot service (see
+gnome.sh; GNOME 41+ refuses it, so check window state with `xwininfo` instead). 26.04 (GNOME 50) has
+no X11 session, and Wayland sessions aren't covered here yet.

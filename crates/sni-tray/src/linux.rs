@@ -40,7 +40,13 @@ impl ksni::Tray for Tray {
 
     fn activate(&mut self, x: i32, y: i32) {
         let pos = (x > 0 || y > 0).then_some((x, y));
-        (self.actions.open)(pos);
+        run(&self.actions, move |a| (a.open)(pos));
+    }
+
+    // Ubuntu's GNOME AppIndicator extension always shows the menu on a single left click (Activate
+    // only comes from a double click); middle click sends this instead, so it opens the panel too.
+    fn secondary_activate(&mut self, x: i32, y: i32) {
+        self.activate(x, y);
     }
 
     fn icon_pixmap(&self) -> Vec<Icon> {
@@ -53,7 +59,7 @@ impl ksni::Tray for Tray {
 
     fn menu(&self) -> Vec<MenuItem<Self>> {
         let item = |label: &str, act: fn(&Actions)| -> MenuItem<Self> {
-            StandardItem { label: label.into(), activate: Box::new(move |t: &mut Self| act(&t.actions)), ..Default::default() }
+            StandardItem { label: label.into(), activate: Box::new(move |t: &mut Self| run(&t.actions, act)), ..Default::default() }
                 .into()
         };
         vec![
@@ -64,6 +70,14 @@ impl ksni::Tray for Tray {
             item("Quit", |a| (a.quit)()),
         ]
     }
+}
+
+/// Runs an action off the tray's own thread. Actions update the icon (`SniTray::update`), which
+/// blocks on the tray's event loop — from inside one of its callbacks that panics ("Cannot start a
+/// runtime from within a runtime") and the icon stops responding.
+fn run(actions: &Arc<Actions>, act: impl FnOnce(&Actions) + Send + 'static) {
+    let actions = Arc::clone(actions);
+    std::thread::spawn(move || act(&actions));
 }
 
 /// A running tray icon.

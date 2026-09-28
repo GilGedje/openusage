@@ -12,6 +12,6 @@ if ! command -v node >/dev/null; then
 fi
 export CARGO_TARGET_DIR=/cache/target
 cd /src/crates/tray && npx --yes @tauri-apps/cli@2 build --bundles deb >/dev/null 2>&1 || npx --yes @tauri-apps/cli@2 build --bundles deb
-DEB=$(ls "$CARGO_TARGET_DIR"/release/bundle/deb/*.deb | head -n 1)
+DEB=$(ls -t "$CARGO_TARGET_DIR"/release/bundle/deb/*.deb | head -n 1)  # newest: the folder keeps old builds
 mkdir -p /src/.ubuntu-test/build && cp "$DEB" /src/.ubuntu-test/build/tray.deb
 dpkg-deb -f /src/.ubuntu-test/build/tray.deb Package Version Depends

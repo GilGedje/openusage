@@ -85,11 +85,44 @@ NoDisplay=true
 DESKTOP
 fi
 
+# --- GNOME: a single left click on the icon opens the panel -----------------------
+# Ubuntu's tray support opens an icon's menu on a single left click. A small GNOME Shell extension
+# from this folder makes Quota's icon open its panel instead (right click still shows the menu).
+# Installed for this user only; GNOME picks it up at the next login.
+EXT_UUID="quota-tray-click@exodus.ai"
+EXT_NOTE=""
+if command -v gnome-shell >/dev/null 2>&1; then
+  GNOME_VERSION=$(gnome-shell --version 2>/dev/null | sed -n 's/.* \([0-9][0-9.]*\).*/\1/p')
+  GNOME_MAJOR=${GNOME_VERSION%%.*}
+  if [ -n "$GNOME_MAJOR" ]; then
+    if [ "$GNOME_MAJOR" -ge 45 ]; then EXT_SRC=modern; else EXT_SRC=legacy; fi
+    say "Adding the GNOME tray-click extension (GNOME $GNOME_VERSION)"
+    EXT_DIR="$HOME/.local/share/gnome-shell/extensions/$EXT_UUID"
+    rm -rf "$EXT_DIR"
+    mkdir -p "$EXT_DIR"
+    cp "$HERE/gnome-extension/$EXT_SRC/metadata.json" "$HERE/gnome-extension/$EXT_SRC/extension.js" "$EXT_DIR/"
+    CUR=$(gsettings get org.gnome.shell enabled-extensions 2>/dev/null || echo unknown)
+    case "$CUR" in
+      *"'$EXT_UUID'"*) NEW="" ;;
+      "@as []" | "[]") NEW="['$EXT_UUID']" ;;
+      "["*"]") NEW="${CUR%]}, '$EXT_UUID']" ;;
+      *) NEW="" ; echo "Couldn't read GNOME's extension list; turn on \"Quota by Exodus.Ai: Tray Click\" in the Extensions app." ;;
+    esac
+    if [ -n "$NEW" ] && ! gsettings set org.gnome.shell enabled-extensions "$NEW"; then
+      echo "Couldn't turn the extension on; turn on \"Quota by Exodus.Ai: Tray Click\" in the Extensions app."
+    fi
+    if [ "$(gsettings get org.gnome.shell disable-user-extensions 2>/dev/null || echo false)" = "true" ]; then
+      echo "Note: user extensions are switched off on this desktop, so a left click will still show the menu."
+    fi
+    EXT_NOTE=" Log out and back in once so a single left click on the icon opens the panel (until then, use Open in the icon's menu)."
+  fi
+fi
+
 # --- Start, with the panel open so the user can sign in ------------------------
 if [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then
   pkill -x litellm-usage 2>/dev/null || true
   LITELLM_USAGE_OPEN_PANEL=1 nohup litellm-usage >/dev/null 2>&1 &
-  say "Done. The panel is open at the top right: click Sign In and finish in your browser."
+  say "Done. The panel is open at the top right: click Sign In and finish in your browser.$EXT_NOTE"
 else
   say "Done. Log in to your desktop and start \"Quota by Exodus.Ai\" to sign in."
 fi

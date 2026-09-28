@@ -27,7 +27,8 @@ installer installs only what the machine is missing or has too old, never remove
 doesn't touch the machine's apt sources — no apt mirror or internet needed.
 
 - A desktop with a tray: Ubuntu's default desktop shows tray icons through its built-in AppIndicator
-  extension.
+  extension. The installer also adds Quota's own small GNOME Shell extension (per user, no sudo) so a
+  single left click on the icon opens the panel; it takes effect after the user logs out and back in.
 - Secure storage for the sign-in token: GNOME Keyring (standard on Ubuntu desktop). Over SSH or on
   servers without a desktop there's no keyring, so sign-in can't be saved there (roadmap item 6).
 - `ccline` needs nothing beyond the base system (built against glibc 2.30, so it runs on 20.04+).

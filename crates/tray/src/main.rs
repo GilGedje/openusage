@@ -34,6 +34,18 @@ fn main() {
         unsafe { std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1") };
     }
 
+    // On a Wayland session, run through XWayland: Wayland doesn't let an app place its own window
+    // (the panel goes next to the tray icon) or take focus without a token, which "click away to
+    // close" relies on (see sni_tray::present_with_server_time).
+    #[cfg(target_os = "linux")]
+    if std::env::var_os("GDK_BACKEND").is_none()
+        && std::env::var_os("WAYLAND_DISPLAY").is_some()
+        && std::env::var_os("DISPLAY").is_some()
+    {
+        // SAFETY: first thing in main, before any other thread exists.
+        unsafe { std::env::set_var("GDK_BACKEND", "x11") };
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_positioner::init())
         .manage(AppState::default())

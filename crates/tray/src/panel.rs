@@ -44,7 +44,23 @@ pub fn show(app: &AppHandle, click: Option<(i32, i32)>) {
     place(&window);
     let _ = window.show();
     let _ = window.set_focus();
+    #[cfg(target_os = "linux")]
+    focus_on_x11(&window);
     state::publish(app);
+}
+
+/// GNOME only focuses a window shown from a tray click if it carries a fresh user timestamp; without
+/// focus, clicking elsewhere couldn't close the panel. See `sni_tray::present_with_server_time`.
+#[cfg(target_os = "linux")]
+fn focus_on_x11(window: &WebviewWindow) {
+    let w = window.clone();
+    let _ = window.run_on_main_thread(move || {
+        if let Ok(gtk_window) = w.gtk_window() {
+            use gtk::glib::ObjectType;
+            // SAFETY: a live GtkWindow, on the GTK main thread.
+            unsafe { sni_tray::present_with_server_time(gtk_window.as_ptr().cast()) };
+        }
+    });
 }
 
 /// "Change LiteLLM URL…": open the panel on its settings view.
